@@ -4,9 +4,9 @@ export const Start = () => ({
     type : ActionType.Start
 });
 
-export const Success = (auths) => ({
+export const Success = (result) => ({
     type : ActionType.Success,
-    auths
+    result
 });
 
 export const Failure = (error) => ({
@@ -14,21 +14,29 @@ export const Failure = (error) => ({
     error
 });
 
-export const Fetching = (jwt) => ({
+export const Fetching = () => ({
     type : ActionType.Fetching,
+
+});
+
+export const FetchUniteInfo = (uniteId) => ({
+    type : ActionType.FetchUniteInfo,uniteId
+
+});
+export const FetchUniteInfoSuccess = (result) => ({
+    type : ActionType.FetchUniteInfoSuccess,result
+
+});
+
+export const Delete = (uniteId,jwt) => ({
+    type : ActionType.Delete,uniteId,
     jwt
 });
 
 
-export const Delete = (uniteIdList,jwt) => ({
-    type : ActionType.Delete,uniteIdList,
-    jwt
-});
-
-
-export const DeleteSuccess = (uniteIdList) => ({
+export const DeleteSuccess = (result) => ({
     type : ActionType.DeleteSuccess,
-    uniteIdList
+    result
 });
 
 export const Update = (jwt,uniteInfo) => ({
@@ -37,8 +45,8 @@ export const Update = (jwt,uniteInfo) => ({
 });
 
 
-export const UpdateSuccess = (uniteInfo) => ({
-    type : ActionType.UpdateSuccess,uniteInfo
+export const UpdateSuccess = (result) => ({
+    type : ActionType.UpdateSuccess,result
 });
 
 export const Add = (jwt,uniteInfo) => ({
@@ -47,8 +55,8 @@ export const Add = (jwt,uniteInfo) => ({
 });
 
 
-export const AddSuccess = (uniteInfo) => ({
-    type : ActionType.AddSuccess,uniteInfo
+export const AddSuccess = (result) => ({
+    type : ActionType.AddSuccess,result
 });
 
 

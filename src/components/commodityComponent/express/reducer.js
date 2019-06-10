@@ -3,7 +3,9 @@ import {message} from 'antd';
 
 const initState = {
     isLoading: false,   // 是否加载中
-    expId: undefined // auth
+    expressId: undefined, // auth
+    expressList:[],
+    expressInfo:undefined
 };
 
 //初始化status为载入状态
@@ -14,21 +16,48 @@ export default (state = initState, action) => {
             return {...state, isLoading: true}
         }
         case ActionTypes.Success: {
-            return {...state,  isLoading: false}
+            const data = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state, isLoading: false}
+            }else{
+                return {...state, expressList:data.expressList, isLoading: false}
+            }
+        }
+        case ActionTypes.FetchExpressInfoSuccess: {
+            const data = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state, isLoading: false}
+            }else{
+                return {...state, expressInfo:data.expressInfo, isLoading: false}
+            }
         }
         case ActionTypes.Edit: {
-            return {...state, expId:action.expId, isLoading: false}
+            return {...state, expressId:action.expId, isLoading: false}
         }
         case ActionTypes.AddSuccess: {
-            message.success("添加快递成功");
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("添加快递成功");
+            }
             return {...state, isLoading: false}
         }
         case ActionTypes.UpdateSuccess: {
-            message.success("更新快递信息成功");
-            return {...state,isLoading: false}
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("更新快递信息成功");
+            }
+            return {...state, isLoading: false}
         }
         case ActionTypes.DeleteSuccess: {
-            message.success("删除成功");
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("删除快递成功");
+            }
             return {...state, isLoading: false}
         }
         case ActionTypes.Failure: {

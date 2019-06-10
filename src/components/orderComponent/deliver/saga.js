@@ -6,10 +6,12 @@ import * as ActionTypes from './actionTypes';
 // 获取未发货订单列表
 function* fetchDelivers(action) {
     try {
-        const result = yield call(Api.fetchDelivers,{
-            jwt:action.jwt
+        const result = yield call(Api.fetchOrders,{
+            jwt:action.jwt,
+            manId:action.manId,
+            state:2
         });
-        yield put(Actions.Success(result.data.data));
+        yield put(Actions.Success(result.data));
     } catch (e) {
         console.log(e);
         yield put(Actions.Failure("获取待发货订单列表时发生错误："+e.toString()));
@@ -20,16 +22,36 @@ export function* watchFetchDelivers() {
     yield takeEvery(ActionTypes.Fetching, fetchDelivers);
 }
 
+function* fetchPayInfo(action) {
+    try {
+        const result = yield call(Api.fetchOrderInfo,{
+            jwt:action.jwt,
+            orderId:action.orderId,
+        });
+        yield put(Actions.FetchOrderInfoSuccess(result.data));
+    } catch (e) {
+        console.log(e);
+        yield put(Actions.Failure("获取订单信息时发生错误："+e.toString()));
+    }
+}
+
+export function* watchFetchDeliverInfo() {
+    yield takeEvery(ActionTypes.FetchOrderInfo, fetchPayInfo);
+}
+
 // 获取未付款订单列表
 function* deliver(action) {
     try {
-        // const result = yield call(Api.fetchPays,{
-        //     orderId:action.orderId,
-        //     price:action.price,
-        //     jwt:action.jwt
-        // });
-        // yield put(Actions.Success(result.data.data));
-        yield put(Actions.DeliverSuccess(action.orderId));
+        const result = yield call(Api.updateOrder,{
+            state:3,
+            orderId:action.info.orderId,
+            expId:action.info.expId,
+            number:action.info.number,
+            expMessage:action.info.expMessage,
+            manId:action.info.manId,
+            jwt:action.jwt
+        });
+        yield put(Actions.DeliverSuccess(result.data));
     } catch (e) {
         console.log(e);
         yield put(Actions.Failure("发货时发生错误："+e.toString()));
@@ -44,12 +66,11 @@ export function* watchDeliver() {
 // 获取未付款订单列表
 function* deleteDelivers(action) {
     try {
-        // const result = yield call(Api.fetchPays,{
-        //     orderIdList:action.orderIdList,
-        //     jwt:action.jwt
-        // });
-        // yield put(Actions.Success(result.data.data));
-        yield put(Actions.DeleteDeliversSuccess(action.orderIdList));
+        const result = yield call(Api.deleteOrder,{
+            orderId:action.orderId,
+            jwt:action.jwt
+        });
+        yield put(Actions.DeleteDeliversSuccess(result.data));
     } catch (e) {
         console.log(e);
         yield put(Actions.Failure("删除待付款订单时发生错误："+e.toString()));

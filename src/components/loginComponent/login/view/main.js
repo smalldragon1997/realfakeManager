@@ -20,20 +20,16 @@ class login extends React.Component {
         });
     }
 
-    componentDidUpdate  (){
-
-    }
     render() {
         const {
             oldInfo,
             info,// 登录后的管理员信息
             isLoading, // 是否是载入状态
             onLogin, //登录
-            onSaveInfo, //保存登录信息
         } = this.props;
         // 如果已经登录过，到个人信息页面
         if(this.props.oldInfo!==undefined){
-            this.props.history.push("/high/manager/");
+            this.props.history.push("/person/info");
         }
         return (
             <Spin spinning={isLoading}>

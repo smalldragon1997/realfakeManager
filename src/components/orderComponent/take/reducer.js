@@ -18,7 +18,22 @@ export default (state = initState, action) => {
             return {...state, isLoading: true}
         }
         case ActionTypes.Success: {
-            return {...state, ...action.result, isLoading: false}
+            const data  = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state,isLoading:false}
+            }else{
+                return {...state ,orderList:data.orderList,isLoading:false}
+            }
+        }
+        case ActionTypes.FetchOrderInfoSuccess: {
+            const data  = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state,isLoading:false}
+            }else{
+                return {...state ,orderInfo:data.orderInfo,isLoading:false}
+            }
         }
         case ActionTypes.FetchTakeExpressSuccess: {
             return {...state, expressList:action.expressList, isLoading: false}
@@ -33,42 +48,21 @@ export default (state = initState, action) => {
             return {...state,key:undefined, isLoading: false}
         }
         case ActionTypes.UpdateDeliverSuccess: {
-            let newOrderList = state.orderList;
-            let newOrderInfo = state.orderInfo;
-
-            for(let i=0;i<newOrderList.length;i++){
-                // 如果有匹配的订单
-                console.log(newOrderList[i].orderId,action.orderId)
-                if(newOrderList[i].orderId===action.orderId){
-                    // 修改订单信息
-                    newOrderList[i].express.expId = action.expId;
-                    for(let j=0;j<state.expressList.length;j++){
-                        if(state.expressList[j].expId===action.expId){
-                            newOrderList[i].express.name = state.expressList[j].name;
-                        }
-                    }
-                    newOrderList[i].expMessage = action.expMessage;
-                    newOrderInfo = newOrderList[i];
-                    console.log(newOrderInfo)
-                    break;
-                }
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("更新物流成功");
             }
-            message.success("修改物流信息成功");
-            return {...state, orderList:newOrderList,orderInfo:newOrderInfo,isLoading: false}
+            return {...state,isLoading:false}
         }
 
         case ActionTypes.DeleteOrdersSuccess: {
-            let newOrderList = state.orderList;
-
-            for(let i=0;i<newOrderList.length;i++){
-                for(let j=0;j<action.orderIdList.length;j++) {
-                    if (newOrderList[i].orderId === action.orderIdList[j]) {
-                        newOrderList.remove(i);
-                    }
-                }
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("删除订单成功");
             }
-            message.success("删除订单成功");
-            return {...state, orderList:newOrderList,isLoading: false}
+            return {...state,isLoading:false}
         }
         case ActionTypes.Failure: {
             message.error(action.error);

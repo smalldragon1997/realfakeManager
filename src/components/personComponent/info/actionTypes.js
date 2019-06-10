@@ -13,3 +13,8 @@ export const Failure = 'person/failure';
 export const Update = 'person/Update';
 
 export const UpdateSuccess = 'person/UpdateSuccess';
+
+
+export const UpdatePwd = 'person/UpdatePwd';
+
+export const UpdatePwdSuccess = 'person/UpdatePwdSuccess';

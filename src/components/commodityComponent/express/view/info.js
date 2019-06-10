@@ -20,7 +20,7 @@ import {
     message,
     Table,
     Tag,
-    Divider, Upload, Select,Collapse
+    Divider, Upload, Select, Collapse
 } from 'antd';
 
 const Option = Select.Option;
@@ -30,12 +30,6 @@ import ShowImages from '../../../commom/showImages'
 const CheckboxGroup = Checkbox.Group;
 const {TextArea} = Input;
 const Panel = Collapse.Panel;
-
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
 
 class info extends React.Component {
 
@@ -54,9 +48,9 @@ class info extends React.Component {
     }
 
     componentDidMount() {
-
-        //获取快递信息
-        this.searchExpress(this.props.expId);
+        if (this.props.expressId !== undefined) {
+            this.props.onFetchExpressInfo(this.props.expressId);
+        }
     }
 
     _cropCover() {
@@ -66,34 +60,14 @@ class info extends React.Component {
         });
     }
 
-
-    // 搜索快递
-    searchExpress(expId) {
-        if (expId !== undefined) {
-            client.get({
-                index: 'express',
-                type: 'express',
-                id: expId
-            }).then(
-                function (body) {
-                    this.setState({
-                        ...body._source,
-                    });
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
-        }
-
-    }
-
     render() {
         const {
             expId,
             isLoading, // 是否加载中
             onDelete,
             onUpdate,
+            expressInfo,
+            info
         } = this.props;
 
         const {
@@ -107,7 +81,7 @@ class info extends React.Component {
         return (
             <Spin spinning={isLoading}>
                 {
-                    expId === undefined ? (
+                    expressInfo === undefined ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
@@ -119,7 +93,7 @@ class info extends React.Component {
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
-                                    <Divider>快递信息(发布管理员:{manId})</Divider>
+                                    <Divider>快递信息(发布管理员:{expressInfo.nickname})</Divider>
                                 </Row>
                                 {/*快递名*/}
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
@@ -127,7 +101,7 @@ class info extends React.Component {
                                         快递名：
                                     </Col>
                                     <Col span={18}>
-                                        <Input style={{width: "70%"}} value={expName}
+                                        <Input style={{width: "70%"}} value={expName} placeholder={expressInfo.expName}
                                                onChange={(e) => {
                                                    this.setState({
                                                        expName: e.target.value
@@ -142,7 +116,7 @@ class info extends React.Component {
                                     </Col>
                                     <Col span={18}>
                                         <Input
-                                            style={{width: "70%"}} value={price}
+                                            style={{width: "70%"}} value={price} placeholder={expressInfo.price}
                                             onChange={(e) => {
                                                 this.setState({
                                                     price: e.target.value
@@ -151,17 +125,22 @@ class info extends React.Component {
                                     </Col>
                                 </Row>
                                 {/*快递封面*/}
-                                <Row type={"flex"} align={"middle"}  style={{padding: "3%", paddingTop: 0}}>
+                                <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
                                     <Col span={6} style={{textAlign: "right"}}>
                                         快递封面：
                                     </Col>
                                     <Col span={12}>
                                         <Collapse bordered={false} defaultActiveKey={['1']}>
-                                            <Panel header="选择快递封面" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
+                                            <Panel header="选择快递封面" key="1"
+                                                   style={{background: '#f7f7f7', border: 0, overflow: 'hidden'}}>
 
                                                 <Row>
                                                     {
-                                                        cover === undefined ? null : (
+                                                        cover === undefined ? (
+                                                            <Col span={10}>
+                                                                <Avatar src={expressInfo.cover} size={160} shape={"square"}/>
+                                                            </Col>
+                                                        ) : (
                                                             <Col span={10}>
                                                                 <Avatar src={cover} size={160} shape={"square"}/>
                                                             </Col>
@@ -186,9 +165,10 @@ class info extends React.Component {
                                                                 return false;
                                                             }}
                                                         >
-                                                            {imageUrl ? <Avatar src={imageUrl} size={100} shape={"square"}/> : (
-                                                                null
-                                                            )}
+                                                            {imageUrl ?
+                                                                <Avatar src={imageUrl} size={100} shape={"square"}/> : (
+                                                                    null
+                                                                )}
                                                             <div>
                                                                 <Icon type={this.state.loading ? 'loading' : 'plus'}/>
                                                                 <div className="ant-upload-text">上传封面</div>
@@ -225,19 +205,13 @@ class info extends React.Component {
                                          xxl={{span: 3, offset: 6}} style={{padding: "1%"}}>
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
-                                                    if(expName===undefined||expName===""||
-                                                        price===undefined||price===""||
-                                                        cover===undefined||cover===""){
-                                                        message.error("信息输入不完整");
-                                                    }else{
-                                                        onUpdate({
-                                                            expName: expName,
-                                                            price: price,
-                                                            cover: cover
-                                                        });
-                                                        this.props.history.push("/commodity/express/");
-                                                    }
-                                                    console.log(this.state);
+                                                    onUpdate({
+                                                        manId:info.manId,
+                                                        expId:expressInfo.expId,
+                                                        expName: expName === undefined || expName === "" ? expressInfo.expName : expName,
+                                                        price: price === undefined || price === "" ? expressInfo.price : price,
+                                                        cover: cover === undefined || cover === "" ? expressInfo.cover : cover,                                                        });
+
                                                 }}
                                         >修改</Button>
                                     </Col>
@@ -275,8 +249,11 @@ class info extends React.Component {
 // props绑定state
 const mapStateToProps = (state) => {
     const express = state.commodity.express;
+    const navLink = state.navLink;
     return {
-        expId: express.expId,
+        info: navLink.info,
+        expressId: express.expressId,
+        expressInfo: express.expressInfo,
         isLoading: express.isLoading
     }
 };
@@ -285,13 +262,16 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         onDelete: (expId) => {
-            let expIdList = [];
             dispatch(Actions.Start());
-            dispatch(Actions.Delete(expIdList.push(expId), localStorage.getItem("RealFakeManagerJwt")));
+            dispatch(Actions.Delete(expId, localStorage.getItem("RealFakeManagerJwt")));
         },
         onUpdate: (expInfo) => {
             dispatch(Actions.Start());
             dispatch(Actions.Update(localStorage.getItem("RealFakeManagerJwt"), expInfo));
+        },
+        onFetchExpressInfo: (expId) => {
+            dispatch(Actions.Start());
+            dispatch(Actions.FetchExpressInfo(expId));
         },
     }
 };

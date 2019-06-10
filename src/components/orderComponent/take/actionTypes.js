@@ -25,3 +25,6 @@ export const ReFilter = 'take/ReFilter';
 export const FetchTakeExpress = 'take/FetchTakeExpress';
 export const FetchTakeExpressSuccess = 'take/FetchExpressSuccess';
 
+
+export const FetchOrderInfo = 'deliver/FetchOrderInfo';
+export const FetchOrderInfoSuccess = 'deliver/FetchOrderInfoSuccess';

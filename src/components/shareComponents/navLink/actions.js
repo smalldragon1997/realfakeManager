@@ -24,3 +24,10 @@ export const SaveInfo = (info) => ({
     info
 });
 
+export const Exit = (manId,jwt) => ({
+    type : ActionType.Exit,manId,jwt
+});
+
+export const ExitSuccess = (result) => ({
+    type : ActionType.ExitSuccess,result
+});

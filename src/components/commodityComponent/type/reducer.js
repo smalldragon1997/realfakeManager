@@ -3,7 +3,9 @@ import {message} from 'antd';
 
 const initState = {
     isLoading: false,   // 是否加载中
-    typeId: undefined // auth
+    typeId: undefined, // auth
+    typeList:[],
+    typeInfo:undefined,
 };
 
 //初始化status为载入状态
@@ -14,21 +16,49 @@ export default (state = initState, action) => {
             return {...state, isLoading: true}
         }
         case ActionTypes.Success: {
-            return {...state,  isLoading: false}
+            const data = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state, isLoading: false}
+            }else{
+                return {...state, typeList:data.typeList, isLoading: false}
+            }
+        }
+        case ActionTypes.FetchTypeInfoSuccess: {
+            const data = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state, isLoading: false}
+            }else{
+                return {...state, typeInfo:data.typeInfo, isLoading: false}
+            }
         }
         case ActionTypes.Edit: {
+
             return {...state, typeId:action.typeId, isLoading: false}
         }
         case ActionTypes.AddSuccess: {
-            message.success("添加类型成功");
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("添加类型成功");
+            }
             return {...state, isLoading: false}
         }
         case ActionTypes.UpdateSuccess: {
-            message.success("更新类型信息成功");
-            return {...state,isLoading: false}
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("更新类型信息成功");
+            }
+            return {...state, isLoading: false}
         }
         case ActionTypes.DeleteSuccess: {
-            message.success("删除成功");
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("删除类型成功");
+            }
             return {...state, isLoading: false}
         }
         case ActionTypes.Failure: {

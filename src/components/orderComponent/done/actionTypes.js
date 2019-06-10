@@ -23,3 +23,6 @@ export const DateFilter = 'done/DateFilter';
 export const ReDateFilter = 'done/ReDateFilter';
 
 
+
+export const FetchOrderInfo = 'deliver/FetchOrderInfo';
+export const FetchOrderInfoSuccess = 'deliver/FetchOrderInfoSuccess';

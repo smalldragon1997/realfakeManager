@@ -7,10 +7,12 @@ import {HashRouter, BrowserRouter, Route, NavLink, Switch, Redirect, withRouter}
 import Loadable from '../../../commom/loadable';
 
 const Main = Loadable(() => import('./main'));
+const AllMain = Loadable(() => import('./allMain'));
 export default () => {
     return (
         <Switch>
             <Route path="/person/comment/" exact component={Main}/>
+            <Route path="/person/comment/all" exact component={AllMain}/>
         </Switch>
     );
 }

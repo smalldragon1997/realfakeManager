@@ -1,6 +1,12 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import * as Actions from '../actions';
+import * as BrandActions from '../../brand/actions';
+import * as SeriesActions from '../../series/actions';
+import * as TypeActions from '../../type/actions';
+import * as UniteActions from '../../unite/actions';
+import * as QualityActions from '../../quality/actions';
+import * as SizeActions from '../../size/actions';
 import {HashRouter, BrowserRouter, Route, NavLink, Switch, Redirect, withRouter} from 'react-router-dom';
 import {
     Menu,
@@ -24,41 +30,29 @@ const CheckboxGroup = Checkbox.Group;
 
 const {RangePicker} = DatePicker;
 const dateFormat = 'YYYY/MM/DD';
-// 默认的过滤条件
-const initFilter = {
-    brandId: undefined,
-    seriesId: undefined,
-    typeId: undefined,
-    price: undefined,
-    sort: undefined,
-    desc: true,
-};
-// 默认的页面状态
-const initState = {
-    page: 1, //默认当前页
-    key: "", // 默认搜索条件
-    start: 0, // 默认开始时间
-    end: 9999999999999 // 默认结束时间
-};
 
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
 
 class info extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = ({
-            ...initState, // 搜索条件
 
-            commList: [], // 商品列表
-            seriesList: [], // 系列列表
-            brandList: [], // 品牌列表
-            typeList: [], // 类型列表
-            uniteList: [], // 联名列表
+            brandId: undefined,
+            seriesId: undefined,
+            typeId: undefined,
+            uniteId: undefined,
+            price: 1000000,
+            sort: "date",
+            desc: true,
+
+            dateStart: 0, // 默认开始时间
+            dateEnd: 9999999999999, // 默认结束时间
+
+            pageNum: 1, //默认当前页
+            pageSize: 15, //默认当前页数据量
+            keyWord: undefined, // 默认搜索条件
+
         });
         // 回到页面顶部
         window.scrollTo(0, 0);
@@ -66,189 +60,47 @@ class info extends React.Component {
 
     // 初始化获取数据
     componentDidMount() {
-        const {key, start, end,} = this.state;
-        //  搜索商品
-        this.searchCommodity(key, start, end);
-        // 获取系列
-        this.fetchSeries();
-        //获取品牌
-        this.fetchBrand();
-        // 获取类型
-        this.fetchType();
-        // 获取联名
-        this.fetchUnite();
+        this.props.onFilter(this.state);
+        this.props.onFetchBrandList();
+        this.props.onFetchSeriesList();
+        this.props.onFetchTypeList();
+        this.props.onFetchUniteList();
     }
 
-    // 搜索商品
-    searchCommodity(key, start, end) {
-        if (key === "") {
-            client.search({
-                index: 'commodity',
-                type: 'commodity',
-                body: {
-                    query: {
-                        bool: {
-                            must: {match_all: {}},
-                            filter: {
-                                range: {
-                                    date: {
-                                        gte: start,
-                                        lt: end,
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }).then(
-                function (body) {
-                    let value = body.hits.hits;
-                    this.setState({commList: value.reduce((total, next) => (next._score === 0 ? (total) : (total.concat(next._source))), [])});
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
-        } else {
-            client.search({
-                index: 'commodity',
-                type: 'commodity',
-                body: {
-                    query: {
-                        bool: {
-                            should: [
-                                {match: {title: key}},
-                                {match: {describe: key}},
-                                {match: {commId: key}}
-                            ],
-                            filter: {
-                                range: {
-                                    date: {
-                                        gte: start,
-                                        lt: end,
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }).then(
-                function (body) {
-                    let value = body.hits.hits;
-                    console.log(value)
-                    this.setState({commList: value.reduce((total, next) => (next._score === 0 ? (total) : (total.concat(next._source))), [])});
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
-        }
-
-    }
-
-    // 获取系列
-    fetchSeries() {
-        client.search({
-            index: 'series',
-            type: 'series',
-            body: {
-                query: {match_all: {}}
-            }
-        }).then(
-            function (body) {
-                let value = body.hits.hits;
-                this.setState({seriesList: value.reduce((total, next) => (next._score === 0 ? (total) : (total.concat(next._source))), [])});
-            }.bind(this),
-            function (error) {
-                console.trace(error.message);
-            }
-        );
-    }
-
-    // 获取品牌
-    fetchBrand() {
-        client.search({
-            index: 'brand',
-            type: 'brand',
-            body: {
-                query: {match_all: {}}
-            }
-        }).then(
-            function (body) {
-                let value = body.hits.hits;
-                this.setState({brandList: value.reduce((total, next) => (next._score === 0 ? (total) : (total.concat(next._source))), [])});
-            }.bind(this),
-            function (error) {
-                console.trace(error.message);
-            }
-        );
-    }
-
-    // 获取类型
-    fetchType() {
-        client.search({
-            index: 'type',
-            type: 'type',
-            body: {
-                query: {match_all: {}}
-            }
-        }).then(
-            function (body) {
-                let value = body.hits.hits;
-                this.setState({typeList: value.reduce((total, next) => (next._score === 0 ? (total) : (total.concat(next._source))), [])});
-            }.bind(this),
-            function (error) {
-                console.trace(error.message);
-            }
-        );
-    }
-
-    // 获取联名
-    fetchUnite() {
-        client.search({
-            index: 'unite',
-            type: 'unite',
-            body: {
-                query: {match_all: {}}
-            }
-        }).then(
-            function (body) {
-                let value = body.hits.hits;
-                this.setState({uniteList: value.reduce((total, next) => (next._score === 0 ? (total) : (total.concat(next._source))), [])});
-            }.bind(this),
-            function (error) {
-                console.trace(error.message);
-            }
-        );
-    }
 
     render() {
         const {
             auth, // 权限信息
             info, // 管理员信息
             isLoading, // 是否加载中
-            brandId, // 帅选品牌id
-            seriesId,// 帅选系列id
-            typeId,// 帅选类型id
-            uniteId, // 筛选联名id
-            price,// 帅选价格
-            sort, // 排序方式
-            desc,// 升序降序
-            onFilter, //筛选
+
+            onFilter, //搜索
             onEditCommodity, // 查看详情
             onDeleteCommodity, // 删除商品
-        } = this.props;
 
-        const {
-            page, // 当前页
-            key, // 搜索关键字
-            start, // 开始时间
-            end, // 结束时间
+
             commList, // 商品列表
             seriesList, // 系列列表
             brandList, // 品牌列表
             typeList, // 类型列表
             uniteList, // 联名列表
+        } = this.props;
+
+        const {
+            pageSize, // 当前页
+            pageNum,
+            brandId,
+            seriesId,
+            typeId,
+            uniteId,
+
+            keyWord, // 搜索关键字
+            dateStart, // 开始时间
+            dateEnd, // 结束时间
+            sort,
+            desc,
+            price,
+
         } = this.state;
 
         return (
@@ -268,19 +120,54 @@ class info extends React.Component {
                                 </Row>
                                 {/*排序方式和搜索关键字*/}
                                 <Row type={"flex"} align={"middle"}
-                                     style={{padding: "3%", paddingTop: 0,paddingBottom: "1%"}}>
+                                     style={{padding: "3%", paddingTop: 0, paddingBottom: "1%"}}>
                                     <Col span={15} style={{textAlign: "right", paddingRight: 5}}>
 
                                         <RadioGroup
                                             buttonStyle="solid"
                                             style={{width: "100%"}}
                                             onChange={(e) => {
-                                                onFilter(brandId, seriesId, typeId, uniteId, price, e.target.value, desc);
-                                                this.setState({page: 1});
-                                            }} defaultValue="like">
+                                                onFilter({
+                                                    brandId: brandId,
+                                                    seriesId: seriesId,
+                                                    typeId: typeId,
+                                                    uniteId: uniteId,
+                                                    price: price,
+                                                    sort: e.target.value,
+                                                    desc: desc,
+                                                    dateStart: dateStart,
+                                                    dateEnd: dateEnd,
+                                                    keyWord: keyWord,
+                                                    pageNum: 1,
+                                                    pageSize: pageSize
+                                                });
+                                                this.setState({
+                                                    sort: e.target.value,
+                                                    pageNum: 1
+                                                });
+                                            }} defaultValue="date">
                                             <RadioButton value="like" onClick={(e) => {
-                                                onFilter(brandId, seriesId, typeId, uniteId, price, sort, desc, e.target.value);
-                                                this.setState({page: 1});
+                                                if (sort === "like") {
+                                                    onFilter({
+                                                        brandId: brandId,
+                                                        seriesId: seriesId,
+                                                        typeId: typeId,
+                                                        uniteId: uniteId,
+                                                        price: price,
+                                                        sort: sort,
+                                                        desc: !desc,
+                                                        dateStart: dateStart,
+                                                        dateEnd: dateEnd,
+                                                        keyWord: keyWord,
+                                                        pageNum: 1,
+                                                        pageSize: pageSize
+                                                    });
+                                                    this.setState({
+                                                        pageNum: 1,
+                                                        desc: !desc
+                                                    });
+
+                                                }
                                             }}>
                                                 收藏量{   // 如果当前没有选中 则不显示箭头
                                                 sort === "like" ? (
@@ -294,8 +181,26 @@ class info extends React.Component {
                                             }
                                             </RadioButton>
                                             <RadioButton value="glance" onClick={(e) => {
-                                                onFilter(brandId, seriesId, typeId, uniteId, price, sort, desc, e.target.value);
-                                                this.setState({page: 1});
+                                                if (sort === "glance") {
+                                                    onFilter({
+                                                        brandId: brandId,
+                                                        seriesId: seriesId,
+                                                        typeId: typeId,
+                                                        uniteId: uniteId,
+                                                        price: price,
+                                                        sort: sort,
+                                                        desc: !desc,
+                                                        dateStart: dateStart,
+                                                        dateEnd: dateEnd,
+                                                        keyWord: keyWord,
+                                                        pageNum: 1,
+                                                        pageSize: pageSize
+                                                    });
+                                                    this.setState({
+                                                        pageNum: 1,
+                                                        desc: !desc
+                                                    })
+                                                }
                                             }}>
                                                 浏览量{   // 如果当前没有选中 则不显示箭头
                                                 sort === "glance" ? (
@@ -308,12 +213,30 @@ class info extends React.Component {
                                                 ) : null
                                             }
                                             </RadioButton>
-                                            <RadioButton value="sale" onClick={(e) => {
-                                                onFilter(brandId, seriesId, typeId, uniteId, price, sort, desc, e.target.value);
-                                                this.setState({page: 1});
+                                            <RadioButton value="sales" onClick={(e) => {
+                                                if (sort === "sales") {
+                                                    onFilter({
+                                                        brandId: brandId,
+                                                        seriesId: seriesId,
+                                                        typeId: typeId,
+                                                        uniteId: uniteId,
+                                                        price: price,
+                                                        sort: sort,
+                                                        desc: !desc,
+                                                        dateStart: dateStart,
+                                                        dateEnd: dateEnd,
+                                                        keyWord: keyWord,
+                                                        pageNum: 1,
+                                                        pageSize: pageSize
+                                                    });
+                                                    this.setState({
+                                                        pageNum: 1,
+                                                        desc: !desc
+                                                    })
+                                                }
                                             }}>
                                                 销量{   // 如果当前没有选中 则不显示箭头
-                                                sort === "sale" ? (
+                                                sort === "sales" ? (
                                                     // 根据desc判断箭头指示方向
                                                     desc ? (
                                                         <Icon type="arrow-down" theme="outlined"/>
@@ -323,8 +246,26 @@ class info extends React.Component {
                                                 ) : null
                                             }</RadioButton>
                                             <RadioButton value="price" onClick={(e) => {
-                                                onFilter(brandId, seriesId, typeId, uniteId, price, sort, desc, e.target.value);
-                                                this.setState({page: 1});
+                                                if (sort === "price") {
+                                                    onFilter({
+                                                        brandId: brandId,
+                                                        seriesId: seriesId,
+                                                        typeId: typeId,
+                                                        uniteId: uniteId,
+                                                        price: price,
+                                                        sort: sort,
+                                                        desc: !desc,
+                                                        dateStart: dateStart,
+                                                        dateEnd: dateEnd,
+                                                        keyWord: keyWord,
+                                                        pageNum: 1,
+                                                        pageSize: pageSize
+                                                    });
+                                                    this.setState({
+                                                        pageNum: 1,
+                                                        desc: !desc
+                                                    })
+                                                }
                                             }}>
                                                 价格{   // 如果当前没有选中 则不显示箭头
                                                 sort === "price" ? (
@@ -337,8 +278,26 @@ class info extends React.Component {
                                                 ) : null
                                             }</RadioButton>
                                             <RadioButton value="date" onClick={(e) => {
-                                                onFilter(brandId, seriesId, typeId, uniteId, price, sort, desc, e.target.value);
-                                                this.setState({page: 1});
+                                                if (sort === "date") {
+                                                    onFilter({
+                                                        brandId: brandId,
+                                                        seriesId: seriesId,
+                                                        typeId: typeId,
+                                                        uniteId: uniteId,
+                                                        price: price,
+                                                        sort: sort,
+                                                        desc: !desc,
+                                                        dateStart: dateStart,
+                                                        dateEnd: dateEnd,
+                                                        keyWord: keyWord,
+                                                        pageNum: 1,
+                                                        pageSize: pageSize
+                                                    });
+                                                    this.setState({
+                                                        pageNum: 1,
+                                                        desc: !desc
+                                                    })
+                                                }
                                             }}>
                                                 日期{   // 如果当前没有选中 则不显示箭头
                                                 sort === "date" ? (
@@ -356,31 +315,71 @@ class info extends React.Component {
                                         <Row type={"flex"} align={"middle"}>
                                             <Col span={12} style={{paddingRight: 5}}>
                                                 <Input
-                                                    value={key}
+                                                    value={keyWord}
                                                     style={{width: "100%"}} placeholder={"商品编号、标题、描述"}
                                                     onChange={(e) => {
                                                         this.setState({
-                                                            ...this.state,
-                                                            key: e.target.value
+                                                            keyWord: e.target.value
                                                         })
                                                     }}/>
                                             </Col>
                                             <Col span={6} style={{paddingRight: 5}}>
                                                 <Button
                                                     style={{width: "100%"}} type={"primary"} onClick={() => {
-                                                    if (key === "") {
+                                                    if (keyWord === "" || keyWord === undefined) {
                                                         message.error("请输入关键字");
                                                     } else {
-                                                        this.searchCommodity(key, start, end);
-                                                        this.setState({page: 1});
+                                                        onFilter({
+                                                            brandId: brandId,
+                                                            seriesId: seriesId,
+                                                            typeId: typeId,
+                                                            uniteId: uniteId,
+                                                            price: price,
+                                                            sort: sort,
+                                                            desc: desc,
+                                                            dateStart: dateStart,
+                                                            dateEnd: dateEnd,
+                                                            keyWord: keyWord,
+                                                            pageNum: 1,
+                                                            pageSize: pageSize
+                                                        });
+                                                        this.setState({pageNum: 1})
                                                     }
                                                 }}>搜索</Button>
                                             </Col>
                                             <Col span={6}>
                                                 <Button
                                                     style={{width: "100%"}} onClick={() => {
-                                                    this.setState({...initState});
-                                                    this.searchCommodity("", start, end)
+                                                    onFilter({
+                                                        brandId: undefined,
+                                                        seriesId: undefined,
+                                                        typeId: undefined,
+                                                        uniteId: undefined,
+                                                        price: 1000000,
+                                                        sort: "date",
+                                                        desc: true,
+                                                        dateStart: 0,
+                                                        dateEnd: 9999999999999,
+                                                        keyWord: undefined,
+                                                        pageNum: 1,
+                                                        pageSize: 15
+                                                    });
+                                                    this.setState({
+                                                        brandId: undefined,
+                                                        seriesId: undefined,
+                                                        typeId: undefined,
+                                                        uniteId: undefined,
+                                                        price: 1000000,
+                                                        sort: "date",
+                                                        desc: true,
+
+                                                        dateStart: 0, // 默认开始时间
+                                                        dateEnd: 9999999999999, // 默认结束时间
+
+                                                        pageNum: 1, //默认当前页
+                                                        pageSize: 15, //默认当前页数据量
+                                                        keyWord: undefined, // 默认搜索条件
+                                                    });
                                                 }}>重置</Button>
                                             </Col>
 
@@ -390,7 +389,7 @@ class info extends React.Component {
 
                                 </Row>
                                 {/*筛选条件和时间*/}
-                                <Row style={{textAlign: "right", padding: "3%", paddingBottom: "1%",paddingTop:0}}>
+                                <Row style={{textAlign: "right", padding: "3%", paddingBottom: "1%", paddingTop: 0}}>
                                     <Col span={11}>
                                         <Row type={"flex"} align={"middle"}>
                                             <Col span={5}>
@@ -402,8 +401,24 @@ class info extends React.Component {
                                                         placeholder="品牌"
                                                         optionFilterProp="children"
                                                         onChange={(e) => {
-                                                            onFilter(e, seriesId, typeId, uniteId, price, sort, desc);
-                                                            this.setState({page: 1});
+                                                            onFilter({
+                                                                brandId: e,
+                                                                seriesId: seriesId,
+                                                                typeId: typeId,
+                                                                uniteId: uniteId,
+                                                                price: price,
+                                                                sort: sort,
+                                                                desc: desc,
+                                                                dateStart: dateStart,
+                                                                dateEnd: dateEnd,
+                                                                keyWord: keyWord,
+                                                                pageNum: 1,
+                                                                pageSize: pageSize
+                                                            });
+                                                            this.setState({
+                                                                brandId: e,
+                                                                pageNum: 1
+                                                            });
                                                         }}
                                                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                                                 >
@@ -424,8 +439,24 @@ class info extends React.Component {
                                                         placeholder="系列"
                                                         optionFilterProp="children"
                                                         onChange={(e) => {
-                                                            onFilter(brandId, e, typeId, uniteId, price, sort, desc);
-                                                            this.setState({page: 1});
+                                                            onFilter({
+                                                                brandId: brandId,
+                                                                seriesId: e,
+                                                                typeId: typeId,
+                                                                uniteId: uniteId,
+                                                                price: price,
+                                                                sort: sort,
+                                                                desc: desc,
+                                                                dateStart: dateStart,
+                                                                dateEnd: dateEnd,
+                                                                keyWord: keyWord,
+                                                                pageNum: 1,
+                                                                pageSize: pageSize
+                                                            });
+                                                            this.setState({
+                                                                seriesId: e,
+                                                                pageNum: 1
+                                                            });
                                                         }}
                                                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                                                 >
@@ -436,10 +467,12 @@ class info extends React.Component {
                                                                         key={index}>{item.seriesName}</Option>
                                                             ))
                                                         ) : (
-                                                            seriesList.filter(item => (item.brandId === brandId)).map((item, index) => (
-                                                                <Option value={item.seriesId}
-                                                                        key={index}>{item.seriesName}</Option>
-                                                            ))
+                                                            seriesList
+                                                                .filter(item => (item.brand !== null && item.brand.brandId === brandId))
+                                                                .map((item, index) => (
+                                                                    <Option value={item.seriesId}
+                                                                            key={index}>{item.seriesName}</Option>
+                                                                ))
                                                         )
 
                                                     }
@@ -454,8 +487,24 @@ class info extends React.Component {
                                                         placeholder="类型"
                                                         optionFilterProp="children"
                                                         onChange={(e) => {
-                                                            onFilter(brandId, seriesId, e, uniteId, price, sort, desc);
-                                                            this.setState({page: 1});
+                                                            onFilter({
+                                                                brandId: brandId,
+                                                                seriesId: seriesId,
+                                                                typeId: e,
+                                                                uniteId: uniteId,
+                                                                price: price,
+                                                                sort: sort,
+                                                                desc: desc,
+                                                                dateStart: dateStart,
+                                                                dateEnd: dateEnd,
+                                                                keyWord: keyWord,
+                                                                pageNum: 1,
+                                                                pageSize: pageSize
+                                                            });
+                                                            this.setState({
+                                                                typeId: e,
+                                                                pageNum: 1
+                                                            });
                                                         }}
                                                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                                                 >
@@ -476,8 +525,24 @@ class info extends React.Component {
                                                         placeholder="联名"
                                                         optionFilterProp="children"
                                                         onChange={(e) => {
-                                                            onFilter(brandId, seriesId, typeId, e, price, sort, desc);
-                                                            this.setState({page: 1});
+                                                            onFilter({
+                                                                brandId: brandId,
+                                                                seriesId: seriesId,
+                                                                typeId: typeId,
+                                                                uniteId: e,
+                                                                price: price,
+                                                                sort: sort,
+                                                                desc: desc,
+                                                                dateStart: dateStart,
+                                                                dateEnd: dateEnd,
+                                                                keyWord: keyWord,
+                                                                pageNum: 1,
+                                                                pageSize: pageSize
+                                                            });
+                                                            this.setState({
+                                                                uniteId: e,
+                                                                pageNum: 1
+                                                            });
                                                         }}
                                                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                                                 >
@@ -498,8 +563,24 @@ class info extends React.Component {
                                                         placeholder="价格"
                                                         optionFilterProp="children"
                                                         onChange={(e) => {
-                                                            onFilter(brandId, seriesId, typeId, uniteId, e, sort, desc);
-                                                            this.setState({page: 1});
+                                                            onFilter({
+                                                                brandId: brandId,
+                                                                seriesId: seriesId,
+                                                                typeId: typeId,
+                                                                uniteId: uniteId,
+                                                                price: e,
+                                                                sort: sort,
+                                                                desc: desc,
+                                                                dateStart: dateStart,
+                                                                dateEnd: dateEnd,
+                                                                keyWord: keyWord,
+                                                                pageNum: 1,
+                                                                pageSize: pageSize
+                                                            });
+                                                            this.setState({
+                                                                price: e,
+                                                                pageNum: 1
+                                                            });
                                                         }}
                                                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                                                 >
@@ -508,6 +589,7 @@ class info extends React.Component {
                                                     <Option value={400} key={400}>400以内</Option>
                                                     <Option value={500} key={500}>500以内</Option>
                                                     <Option value={600} key={600}>600以内</Option>
+                                                    <Option value={100000} key={100000}>我有钱</Option>
                                                 </Select>
                                             </Col>
                                         </Row>
@@ -520,41 +602,82 @@ class info extends React.Component {
                                             onChange={(e, date) => {
                                                 const start = date[0] === "" ? 0 : new Date(date[0]).getTime();
                                                 const end = date[1] === "" ? 9999999999999 : new Date(date[1]).getTime() + 24 * 60 * 60 * 1000;
-                                                this.setState({
-                                                    start: start,
-                                                    end: end,
+
+                                                onFilter({
+                                                    brandId: brandId,
+                                                    seriesId: seriesId,
+                                                    typeId: typeId,
+                                                    uniteId: uniteId,
+                                                    price: price,
+                                                    sort: sort,
+                                                    desc: desc,
+                                                    dateStart: start,
+                                                    dateEnd: end,
+                                                    keyWord: keyWord,
+                                                    pageNum: 1,
+                                                    pageSize: pageSize
                                                 });
-                                                this.searchCommodity(key, start, end);
-                                                this.setState({page: 1});
+                                                this.setState({
+                                                    dateStart: start,
+                                                    dateEnd: end
+                                                });
                                             }}
                                         />
                                         <Button onClick={() => {
                                             this.setState({
-                                                start: 0,
-                                                end: 9999999999999,
-                                                page: 1
+                                                dateStart: 0,
+                                                dateEnd: 9999999999999,
+                                                pageNum: 1
                                             });
-                                            this.searchCommodity(key, 0, 9999999999999)
+                                            onFilter({
+                                                brandId: brandId,
+                                                seriesId: seriesId,
+                                                typeId: typeId,
+                                                uniteId: uniteId,
+                                                price: price,
+                                                sort: sort,
+                                                desc: desc,
+                                                dateStart: 0,
+                                                dateEnd: 9999999999999,
+                                                keyWord: keyWord,
+                                                pageNum: 1,
+                                                pageSize: pageSize
+                                            });
                                         }}>重置时间范围</Button>
                                     </Col>
 
                                 </Row>
                                 {/*商品列表*/}
-                                <Row type={"flex"} align={"middle"} style={{padding: "3%",paddingTop:0}}>
+                                <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
                                     <List
                                         pagination={{
-                                            current: page,
+                                            current: pageNum,
                                             onChange: (page) => {
-                                                this.setState({page: page});
+                                                this.setState({pageNum: page});
+                                                onFilter({
+                                                    brandId: brandId,
+                                                    seriesId: seriesId,
+                                                    typeId: typeId,
+                                                    uniteId: uniteId,
+                                                    price: price,
+                                                    sort: sort,
+                                                    desc: desc,
+                                                    dateStart: dateStart,
+                                                    dateEnd: dateEnd,
+                                                    keyWord: keyWord,
+                                                    pageNum: page,
+                                                    pageSize: pageSize
+                                                });
+
                                                 // 回到页面顶部
                                                 window.scrollTo(0, 0);
                                             },
                                             showQuickJumper: true,
                                             showTotal: (total, range) => `第${range[0]}-${range[1]}个商品 总个数 ${total} 个`,
-                                            pageSize: 15,
+                                            pageSize: pageSize,
                                         }}
                                         grid={{gutter: 16, xs: 2, sm: 2, md: 2, lg: 2, xl: 3, xxl: 3}}
-                                        dataSource={getCommListByFilter(commList, brandId, seriesId, typeId, uniteId, price, sort, desc, new Date().getTime())}
+                                        dataSource={commList}
                                         renderItem={item => (
                                             <List.Item>
                                                 <Card
@@ -567,7 +690,7 @@ class info extends React.Component {
                                                         <Popconfirm placement="top" title={"确定删除此商品吗？"}
                                                                     onConfirm={() => {
                                                                         onDeleteCommodity(item.commId);
-
+                                                                        // 不知道为什么改这里就可以更新商品store状态
                                                                         let newCommList = commList;
                                                                         for (let i = 0; i < newCommList.length; i++) {
                                                                             if (newCommList[i].commId === item.commId) {
@@ -575,7 +698,6 @@ class info extends React.Component {
                                                                                 break;
                                                                             }
                                                                         }
-                                                                        this.setState({commList: newCommList});
                                                                     }} okText="确认" cancelText="点错了">
                                                             <Icon type="delete"/>
                                                         </Popconfirm>
@@ -586,19 +708,28 @@ class info extends React.Component {
                                                         />
                                                     }
                                                 >
-                                                    {
-                                                        typeList.length!==0?(
-                                                            <Row style={{marginBottom:"4%"}}>
-                                                                {
-                                                                    typeList.map((item,index)=>{
-                                                                        return (
-                                                                            <Tag color="blue" key={index}>{item.typeName}</Tag>
-                                                                        )
-                                                                    })
-                                                                }
-                                                            </Row>
-                                                        ):null
-                                                    }
+                                                    {/*{*/}
+                                                        {/*typeList.length !== 0 ? (*/}
+                                                            {/*<Row style={{marginBottom: "4%"}}>*/}
+                                                                {/*{*/}
+                                                                    {/*typeList*/}
+                                                                        {/*.filter((item1,index)=>{*/}
+                                                                            {/*for (let i = 0;i<item.typeId.length;i++){*/}
+                                                                                {/*if(item.typeId[i]==item1.typeId)*/}
+                                                                                    {/*return true;*/}
+                                                                            {/*}*/}
+                                                                            {/*return false;*/}
+                                                                        {/*})*/}
+                                                                        {/*.map((item, index) => {*/}
+                                                                        {/*return (*/}
+                                                                            {/*<Tag color="blue"*/}
+                                                                                 {/*key={index}>{item.typeName}</Tag>*/}
+                                                                        {/*)*/}
+                                                                    {/*})*/}
+                                                                {/*}*/}
+                                                            {/*</Row>*/}
+                                                        {/*) : null*/}
+                                                    {/*}*/}
                                                     <Meta //商品信息
                                                         style={{paddingBottom: 10}}
                                                         title={// 如果售空显示为红色
@@ -616,7 +747,7 @@ class info extends React.Component {
                                                                 <img
                                                                     src={"https://shose-file.oss-cn-shenzhen.aliyuncs.com/shoseImg/common/left.png"}/>
 
-                                                                {"" + item.describe.slice(0, 25) + "..."}
+                                                                {"" + item.describe.slice(0, 10) + "..."}
                                                                 <img
                                                                     src={"https://shose-file.oss-cn-shenzhen.aliyuncs.com/shoseImg/common/right.png"}/>
                                                             </span>
@@ -666,17 +797,25 @@ class info extends React.Component {
 // props绑定state
 const mapStateToProps = (state) => {
     const all = state.commodity.all;
+    const brand = state.commodity.brand;
+    const series = state.commodity.series;
+    const type = state.commodity.type;
+    const unite = state.commodity.unite;
+    const quality = state.commodity.quality;
+    const size = state.commodity.size;
     const navLink = state.navLink;
     return {
         auth: navLink.auth,
         info: navLink.info,
-        brandId: all.brandId,
-        seriesId: all.seriesId,
-        typeId: all.typeId,
-        uniteId: all.uniteId,
-        price: all.price,
-        sort: all.sort,
-        desc: all.desc,
+        brandList: brand.brandList,
+        seriesList: series.seriesList,
+        typeList: type.typeList,
+        uniteList: unite.uniteList,
+        qualityList:quality.qualityList,
+        sizeList:size.sizeList,
+
+        commList: all.commList,
+
         isLoading: all.isLoading
     }
 };
@@ -688,18 +827,26 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(Actions.Start());
             dispatch(Actions.DeleteCommodity(localStorage.getItem("RealFakeManagerJwt"), commId));
         },
-        onEditCommodity: (commInfo) => {
+        onEditCommodity: (commId) => {
             dispatch(Actions.Start());
-            dispatch(Actions.Edit(commInfo));
+            dispatch(Actions.Edit(commId));
         },
-        onFilter: (brandId, seriesId, typeId, uniteId, price, sort, desc, selected) => {
+        onFilter: (filterInfo) => {
+            console.log(filterInfo);
             dispatch(Actions.Start());
-            // 如果已经选中排序则切换排序方式
-            if (selected === sort) {
-                dispatch(Actions.Filter(brandId, seriesId, typeId, uniteId, price, sort, !desc));
-            } else {
-                dispatch(Actions.Filter(brandId, seriesId, typeId, uniteId, price, sort, desc));
-            }
+            dispatch(Actions.Filter(filterInfo));
+        },
+        onFetchBrandList: () => {
+            dispatch(BrandActions.Fetching());
+        },
+        onFetchSeriesList: () => {
+            dispatch(SeriesActions.Fetching());
+        },
+        onFetchTypeList: () => {
+            dispatch(TypeActions.Fetching());
+        },
+        onFetchUniteList: () => {
+            dispatch(UniteActions.Fetching());
         },
     }
 };

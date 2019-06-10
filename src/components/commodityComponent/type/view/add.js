@@ -20,7 +20,7 @@ import {
     message,
     Table,
     Tag,
-    Divider, Upload, Select,Collapse
+    Divider, Upload, Select, Collapse
 } from 'antd';
 
 const Option = Select.Option;
@@ -30,12 +30,6 @@ import ShowImages from '../../../commom/showImages'
 const CheckboxGroup = Checkbox.Group;
 const Panel = Collapse.Panel;
 const {TextArea} = Input;
-
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
 
 class info extends React.Component {
 
@@ -83,7 +77,7 @@ class info extends React.Component {
             <Spin spinning={isLoading}>
                 {
                     //类型-超级管理员-编辑类目
-                    !(info.isSuper || auth.edi_category) ? (
+                    !(info !== undefined && info.isSuper || auth.edi_category) ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
@@ -104,7 +98,7 @@ class info extends React.Component {
                                     </Col>
                                     <Col span={18}>
                                         <Input placeholder={"输入类型名"}
-                                            style={{width: "70%"}} value={typeName}
+                                               style={{width: "70%"}} value={typeName}
                                                onChange={(e) => {
                                                    this.setState({
                                                        typeName: e.target.value
@@ -137,7 +131,8 @@ class info extends React.Component {
                                     <Col span={12}>
 
                                         <Collapse bordered={false}>
-                                            <Panel header="选择类型封面" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
+                                            <Panel header="选择类型封面" key="1"
+                                                   style={{background: '#f7f7f7', border: 0, overflow: 'hidden'}}>
 
                                                 <Row>
                                                     {
@@ -166,9 +161,10 @@ class info extends React.Component {
                                                                 return false;
                                                             }}
                                                         >
-                                                            {imageUrl ? <Avatar src={imageUrl} size={100} shape={"square"}/> : (
-                                                                null
-                                                            )}
+                                                            {imageUrl ?
+                                                                <Avatar src={imageUrl} size={100} shape={"square"}/> : (
+                                                                    null
+                                                                )}
                                                             <div>
                                                                 <Icon type={this.state.loading ? 'loading' : 'plus'}/>
                                                                 <div className="ant-upload-text">上传封面</div>
@@ -205,20 +201,18 @@ class info extends React.Component {
                                          xxl={{span: 3, offset: 6}} style={{padding: "1%"}}>
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
-                                                    if(typeName===undefined||typeName===""||
-                                                        describe===undefined||describe===""||
-                                                        cover===undefined||cover===""){
+                                                    if (typeName === undefined || typeName === "" ||
+                                                        describe === undefined || describe === "" ||
+                                                        cover === undefined || cover === "") {
                                                         message.error("信息输入不完整");
-                                                    }else{
+                                                    } else {
                                                         onAdd({
+                                                            manId:info.manId,
                                                             typeName: typeName,
                                                             describe: describe,
                                                             cover: cover
                                                         });
-                                                        this.props.history.push("/commodity/type/");
                                                     }
-                                                    console.log(this.state);
-
                                                 }}
                                         >确认添加</Button>
                                     </Col>

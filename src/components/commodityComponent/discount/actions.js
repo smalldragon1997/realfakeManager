@@ -4,9 +4,9 @@ export const Start = () => ({
     type : ActionType.Start
 });
 
-export const Success = (auths) => ({
+export const Success = (result) => ({
     type : ActionType.Success,
-    auths
+    result
 });
 
 export const Failure = (error) => ({
@@ -14,21 +14,30 @@ export const Failure = (error) => ({
     error
 });
 
-export const Fetching = (jwt) => ({
-    type : ActionType.Fetching,
+export const Fetching = () => ({
+    type : ActionType.Fetching
+});
+
+
+export const FetchDiscountInfo = (disId) => ({
+    type : ActionType.FetchDiscountInfo,disId
+});
+
+
+export const FetchDiscountInfoSuccess = (result) => ({
+    type : ActionType.FetchDiscountInfoSuccess,result
+});
+
+
+export const Delete = (disId,jwt) => ({
+    type : ActionType.Delete,disId,
     jwt
 });
 
 
-export const Delete = (disIdList,jwt) => ({
-    type : ActionType.Delete,disIdList,
-    jwt
-});
-
-
-export const DeleteSuccess = (disIdList) => ({
+export const DeleteSuccess = (result) => ({
     type : ActionType.DeleteSuccess,
-    disIdList
+    result
 });
 
 export const Update = (jwt,disInfo) => ({
@@ -37,8 +46,8 @@ export const Update = (jwt,disInfo) => ({
 });
 
 
-export const UpdateSuccess = (disInfo) => ({
-    type : ActionType.UpdateSuccess,disInfo
+export const UpdateSuccess = (result) => ({
+    type : ActionType.UpdateSuccess,result
 });
 
 export const Add = (jwt,disInfo) => ({
@@ -47,8 +56,8 @@ export const Add = (jwt,disInfo) => ({
 });
 
 
-export const AddSuccess = (disInfo) => ({
-    type : ActionType.AddSuccess,disInfo
+export const AddSuccess = (result) => ({
+    type : ActionType.AddSuccess,result
 });
 
 

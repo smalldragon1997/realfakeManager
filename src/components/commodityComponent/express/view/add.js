@@ -20,7 +20,7 @@ import {
     message,
     Table,
     Tag,
-    Divider, Upload, Select,Collapse
+    Divider, Upload, Select, Collapse
 } from 'antd';
 
 const Option = Select.Option;
@@ -30,12 +30,6 @@ import ShowImages from '../../../commom/showImages'
 const CheckboxGroup = Checkbox.Group;
 const {TextArea} = Input;
 const Panel = Collapse.Panel;
-
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
 
 class info extends React.Component {
 
@@ -83,7 +77,7 @@ class info extends React.Component {
             <Spin spinning={isLoading}>
                 {
                     //权限-超级管理员-编辑类目
-                    !(info.isSuper || auth.edi_category) ? (
+                    !(info !== undefined && info.isSuper || auth.edi_category) ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
@@ -104,7 +98,7 @@ class info extends React.Component {
                                     </Col>
                                     <Col span={18}>
                                         <Input placeholder={"输入快递名"}
-                                            style={{width: "70%"}} value={expName}
+                                               style={{width: "70%"}} value={expName}
                                                onChange={(e) => {
                                                    this.setState({
                                                        expName: e.target.value
@@ -113,9 +107,9 @@ class info extends React.Component {
                                     </Col>
                                 </Row>
                                 {/*快递描述*/}
-                                <Row style={{padding: "3%", paddingTop: 0}}>
+                                <Row style={{padding: "3%", paddingTop: 0}} type={"flex"} align={"middle"}>
                                     <Col span={6} style={{textAlign: "right"}}>
-                                        快递描述：
+                                        快递价格：
                                     </Col>
                                     <Col span={18}>
                                         <Input
@@ -129,13 +123,14 @@ class info extends React.Component {
                                     </Col>
                                 </Row>
                                 {/*快递封面*/}
-                                <Row type={"flex"} align={"middle"}  style={{padding: "3%", paddingTop: 0}}>
+                                <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
                                     <Col span={6} style={{textAlign: "right"}}>
                                         快递封面：
                                     </Col>
                                     <Col span={12}>
-                                        <Collapse bordered={false} >
-                                            <Panel header="选择快递封面" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
+                                        <Collapse bordered={false}>
+                                            <Panel header="选择快递封面" key="1"
+                                                   style={{background: '#f7f7f7', border: 0, overflow: 'hidden'}}>
 
                                                 <Row>
                                                     {
@@ -164,9 +159,10 @@ class info extends React.Component {
                                                                 return false;
                                                             }}
                                                         >
-                                                            {imageUrl ? <Avatar src={imageUrl} size={100} shape={"square"}/> : (
-                                                                null
-                                                            )}
+                                                            {imageUrl ?
+                                                                <Avatar src={imageUrl} size={100} shape={"square"}/> : (
+                                                                    null
+                                                                )}
                                                             <div>
                                                                 <Icon type={this.state.loading ? 'loading' : 'plus'}/>
                                                                 <div className="ant-upload-text">上传封面</div>
@@ -203,20 +199,18 @@ class info extends React.Component {
                                          xxl={{span: 3, offset: 6}} style={{padding: "1%"}}>
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
-                                                    if(expName===undefined||expName===""||
-                                                        price===undefined||price===""||
-                                                        cover===undefined||cover===""){
+                                                    if (expName === undefined || expName === "" ||
+                                                        price === undefined || price === "" ||
+                                                        cover === undefined || cover === "") {
                                                         message.error("信息输入不完整");
-                                                    }else{
+                                                    } else {
                                                         onAdd({
+                                                            manId: info.manId,
                                                             expName: expName,
                                                             price: price,
                                                             cover: cover
                                                         });
-                                                        this.props.history.push("/commodity/express/");
                                                     }
-                                                    console.log(this.state);
-
                                                 }}
                                         >确认添加</Button>
                                     </Col>

@@ -3,13 +3,14 @@ import {message} from 'antd';
 
 const initState = {
     logList: [],
-    filter: "manId",
     key: undefined,
-    isSuccess: undefined,
     start: 0,
     end: 9999999999999,
-    operationList: [],
     isLoading: false,
+    pageNum:0,
+    pageSize:0,
+    total:0,
+    totalPage:0
 };
 
 //初始化status为载入状态
@@ -20,23 +21,13 @@ export default (state = initState, action) => {
             return {...state, isLoading: true}
         }
         case ActionTypes.Success: {
-            return {...state, ...action.result, isLoading: false}
-        }
-        case ActionTypes.FetchOperationSuccess: {
-            return {...state, ...action.result, isLoading: false}
-        }
-        case ActionTypes.Filter: {
-            return {...state, filter: action.filter, key: action.key,
-                isSuccess:action.isSuccess,start:action.start,end:action.end,isLoading: false,
-                operation:action.operation
-            }
-        }
-        case ActionTypes.ReFilter: {
-            return {
-                ...state, key: undefined, isSuccess: undefined,
-                operation:undefined,
-                start: 0,
-                end: 9999999999999, isLoading: false
+            const data = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state, isLoading: false}
+            }else{
+                message.success("搜索日志成功");
+                return {...state, logList:data.logList,...data.pageInfo,isLoading: false}
             }
         }
         case ActionTypes.Failure: {

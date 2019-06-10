@@ -22,78 +22,18 @@ import {
 import ShowImage from '../../../commom/showImage';
 import ShowImages from '../../../commom/showImages';
 
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
-
 class main extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = ({
-            // 搜索条件
-            key: "",
             // 列表复选
             selectedRowKeys: [],
-            //
-            seriesList: [],
         });
     }
 
     componentDidMount() {
-
-        //获取系列信息
-        this.searchSeries(this.state.key);
-    }
-
-
-    // 搜索系列
-    searchSeries(key) {
-        if (key === "") {
-            client.search({
-                index: 'series',
-                type: 'series',
-                body: {
-                    query: {
-                        match_all: {}
-                    }
-                }
-            }).then(
-                function (body) {
-                    let value = body.hits.hits;
-                    this.setState({seriesList: value.reduce((total, next) => (next._score === 0 ? (total) : (total.concat(next._source))), [])});
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
-        } else {
-            client.search({
-                index: 'series',
-                type: 'series',
-                body: {
-                    query: {
-                        bool: {
-                            should: [
-                                {match: {seriesId: key}},
-                                {match: {seriesName: key}},
-                            ],
-                        }
-                    }
-                }
-            }).then(
-                function (body) {
-                    let value = body.hits.hits;
-                    this.setState({seriesList: value.reduce((total, next) => (next._score === 0 ? (total) : (total.concat(next._source))), [])});
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
-        }
-
+        this.props.onFetchSeriesList();
     }
 
     render() {
@@ -103,12 +43,11 @@ class main extends React.Component {
             onEdit,
             onDelete,
             isLoading,
+            seriesList
         } = this.props;
 
         const {
             selectedRowKeys,
-            seriesList,
-            key
         } = this.state;
 
         const columns = [
@@ -126,6 +65,10 @@ class main extends React.Component {
                 dataIndex: 'seriesName',
                 key: 'seriesName',
             }, {
+                title: '所属品牌',
+                dataIndex: 'brandName',
+                key: 'brandName',
+            }, {
                 title: '操作',
                 dataIndex: 'actions',
                 key: 'actions',
@@ -136,19 +79,7 @@ class main extends React.Component {
                 this.props.history.push("/commodity/series/info");
             }}>编辑</Tag>
                     <Popconfirm placement="top" title={"确定删除系列 " + seriesInfo.seriesName + " 吗？"} onConfirm={() => {
-                        let seriesIdList = [];
-                        seriesIdList.push(seriesInfo.seriesId);
-                        onDelete(seriesIdList);
-                        let newSeriesList = this.state.seriesList;
-                        for (let i = 0; i < newSeriesList.length; i++) {
-                            if (newSeriesList[i].seriesId === seriesInfo.seriesId) {
-                                newSeriesList.remove(i);
-                                break;
-                            }
-                        }
-                        this.setState({
-                            seriesList: newSeriesList
-                        })
+                        onDelete(seriesInfo.seriesId);
                     }} okText="确认" cancelText="点错了">
                     <Tag color="red" key={seriesInfo.seriesId + "2"}>删除</Tag>
                     </Popconfirm>
@@ -165,7 +96,9 @@ class main extends React.Component {
                 cover: seriesList[i].cover,
                 pictures: seriesList[i].pictures,
                 seriesName: seriesList[i].seriesName,
+                brandName: seriesList[i].brand.brandName,
                 describe: seriesList[i].describe,
+                seriesPicList: seriesList[i].seriesPicList,
                 actions: seriesList[i],
             })
         }
@@ -185,70 +118,69 @@ class main extends React.Component {
                                             this.props.history.push("/commodity/series/add");
                                         }}> + 添加系列</Button>
                                     </Row>
-                                    {/*全选和搜索*/}
-                                    <Row type={"flex"} align={"middle"}
-                                         style={{padding: "3%", paddingTop: 0, paddingBottom: "1%"}}>
-                                        <Col span={10}>
-                                            <Popconfirm placement="top"
-                                                        title={"确定删除这" + selectedRowKeys.length + "个系列吗？"}
-                                                        onConfirm={() => {
-                                                            onDelete(selectedRowKeys);
-                                                            let newSeriesList = this.state.seriesList;
-                                                            for (let j = 0; j < selectedRowKeys.length; j++) {
-                                                                for (let i = 0; i < newSeriesList.length; i++) {
-                                                                    if (newSeriesList[i].seriesId === selectedRowKeys[j]) {
-                                                                        newSeriesList.remove(i);
-                                                                        break;
-                                                                    }
-                                                                }
-                                                            }
-                                                            this.setState({
-                                                                ...this.state,
-                                                                seriesList: newSeriesList,
-                                                                selectedRowKeys: []
-                                                            });
-                                                        }} okText="确认" cancelText="点错了">
-                                                <Button type={"danger"}
-                                                        loading={isLoading}
-                                                        disabled={!selectedRowKeys.length > 0}
-                                                >删除</Button>
-                                            </Popconfirm>
+                                    {/*/!*全选和搜索*!/*/}
+                                    {/*<Row type={"flex"} align={"middle"}*/}
+                                         {/*style={{padding: "3%", paddingTop: 0, paddingBottom: "1%"}}>*/}
+                                        {/*<Col span={10}>*/}
+                                            {/*<Popconfirm placement="top"*/}
+                                                        {/*title={"确定删除这" + selectedRowKeys.length + "个系列吗？"}*/}
+                                                        {/*onConfirm={() => {*/}
+                                                            {/*onDelete(selectedRowKeys);*/}
+                                                            {/*let newSeriesList = seriesList;*/}
+                                                            {/*for (let j = 0; j < selectedRowKeys.length; j++) {*/}
+                                                                {/*for (let i = 0; i < newSeriesList.length; i++) {*/}
+                                                                    {/*if (newSeriesList[i].seriesId === selectedRowKeys[j]) {*/}
+                                                                        {/*newSeriesList.remove(i);*/}
+                                                                        {/*break;*/}
+                                                                    {/*}*/}
+                                                                {/*}*/}
+                                                            {/*}*/}
+                                                            {/*this.setState({*/}
+                                                                {/*...this.state,*/}
+                                                                {/*selectedRowKeys: []*/}
+                                                            {/*});*/}
+                                                        {/*}} okText="确认" cancelText="点错了">*/}
+                                                {/*<Button type={"danger"}*/}
+                                                        {/*loading={isLoading}*/}
+                                                        {/*disabled={!selectedRowKeys.length > 0}*/}
+                                                {/*>删除</Button>*/}
+                                            {/*</Popconfirm>*/}
 
-                                        </Col>
-                                        <Col span={14} style={{textAlign: "right"}}>
-                                            <Row type={"flex"} align={"middle"}>
-                                                <Col span={12} style={{paddingRight:5}}>
-                                                    <Input
-                                                        value={key}
-                                                        style={{width: "100%"}} placeholder={"系列编号、名字"}
-                                                        onChange={(e) => {
-                                                            this.setState({
-                                                                ...this.state,
-                                                                key: e.target.value
-                                                            })
-                                                        }}/>
-                                                </Col>
-                                                <Col span={6} style={{paddingRight:5}}>
-                                                    <Button
-                                                        style={{width: "100%"}} type={"primary"} onClick={() => {
-                                                        if (key === "") {
-                                                            message.error("请输入关键字");
-                                                        } else {
-                                                            this.searchSeries(this.state.key);
-                                                        }
-                                                    }}>搜索</Button>
-                                                </Col>
-                                                <Col span={6}>
-                                                    <Button
-                                                        style={{width: "100%"}} onClick={() => {
-                                                        this.setState({key:""});
-                                                        this.searchSeries("")
-                                                    }}>重置</Button>
-                                                </Col>
+                                        {/*</Col>*/}
+                                        {/*<Col span={14} style={{textAlign: "right"}}>*/}
+                                            {/*<Row type={"flex"} align={"middle"}>*/}
+                                                {/*<Col span={12} style={{paddingRight:5}}>*/}
+                                                    {/*<Input*/}
+                                                        {/*value={key}*/}
+                                                        {/*style={{width: "100%"}} placeholder={"系列编号、名字"}*/}
+                                                        {/*onChange={(e) => {*/}
+                                                            {/*this.setState({*/}
+                                                                {/*...this.state,*/}
+                                                                {/*key: e.target.value*/}
+                                                            {/*})*/}
+                                                        {/*}}/>*/}
+                                                {/*</Col>*/}
+                                                {/*<Col span={6} style={{paddingRight:5}}>*/}
+                                                    {/*<Button*/}
+                                                        {/*style={{width: "100%"}} type={"primary"} onClick={() => {*/}
+                                                        {/*if (key === "") {*/}
+                                                            {/*message.error("请输入关键字");*/}
+                                                        {/*} else {*/}
+                                                            {/*this.searchSeries(this.state.key);*/}
+                                                        {/*}*/}
+                                                    {/*}}>搜索</Button>*/}
+                                                {/*</Col>*/}
+                                                {/*<Col span={6}>*/}
+                                                    {/*<Button*/}
+                                                        {/*style={{width: "100%"}} onClick={() => {*/}
+                                                        {/*this.setState({key:""});*/}
+                                                        {/*this.searchSeries("")*/}
+                                                    {/*}}>重置</Button>*/}
+                                                {/*</Col>*/}
 
-                                            </Row>
-                                        </Col>
-                                    </Row>
+                                            {/*</Row>*/}
+                                        {/*</Col>*/}
+                                    {/*</Row>*/}
                                     {/*表格数据*/}
                                     <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
                                         <Table
@@ -262,8 +194,8 @@ class main extends React.Component {
                                                     <Row>
                                                     系列图片：
                                                         {
-                                                            info.pictures === undefined || info.pictures.length === 0 ? null : (
-                                                                <ShowImages images={info.pictures} size={50}/>)
+                                                            info.seriesPicList === undefined || info.seriesPicList.length === 0 ? "无图片" : (
+                                                                <ShowImages images={info.seriesPicList.reduce((list,next)=>(list.concat(next.url)),[])} size={50}/>)
                                                         }
                                                     </Row>
 
@@ -298,6 +230,7 @@ const mapStateToProps = (state) => {
     return {
         auth: navLink.auth,
         info: navLink.info,
+        seriesList:series.seriesList,
         isLoading: series.isLoading
     }
 };
@@ -311,6 +244,10 @@ const mapDispatchToProps = (dispatch) => {
         },
         onEdit: (seriesId) => {
             dispatch(Actions.Edit(seriesId));
+        },
+        onFetchSeriesList: () => {
+            dispatch(Actions.Start());
+            dispatch(Actions.Fetching());
         }
     }
 };

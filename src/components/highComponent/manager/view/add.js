@@ -281,8 +281,14 @@ class add extends React.Component {
                                                         if(!(nickname&&username&&password&&icon)){
                                                             message.error("请输入完整");
                                                         }else{
-                                                            onAddManager(resultAuths, nickname,username,password,icon,isForbidden);
-                                                            this.props.history.push("/high/manager/");
+                                                            onAddManager({
+                                                                auths:resultAuths,
+                                                                nickname:nickname,
+                                                                username:username,
+                                                                password:password,
+                                                                icon:icon,
+                                                                isForbidden:isForbidden,
+                                                            });
                                                         }
                                                     }}
                                             >确认添加</Button>
@@ -324,10 +330,9 @@ const mapStateToProps = (state) => {
 // props绑定dispatch
 const mapDispatchToProps = (dispatch) => {
     return {
-        onAddManager: (auths, nickname, username, password, icon, isForbidden) => {
+        onAddManager: (managerInfo) => {
             dispatch(Actions.Start());
-            dispatch(Actions.AddManager(localStorage.getItem("RealFakeManagerJwt"),
-                auths, nickname, username, password, icon, isForbidden));
+            dispatch(Actions.AddManager(managerInfo,localStorage.getItem("RealFakeManagerJwt")));
         },
         onFetchAuths: () => {
             dispatch(Actions.Start());

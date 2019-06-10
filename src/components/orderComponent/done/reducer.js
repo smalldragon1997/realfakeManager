@@ -18,7 +18,13 @@ export default (state = initState, action) => {
             return {...state, isLoading: true}
         }
         case ActionTypes.Success: {
-            return {...state, ...action.result, isLoading: false}
+            const data  = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state,isLoading:false}
+            }else{
+                return {...state ,orderList:data.orderList,isLoading:false}
+            }
         }
         case ActionTypes.Edit: {
             return {...state, orderInfo:action.orderInfo, isLoading: false}
@@ -35,18 +41,22 @@ export default (state = initState, action) => {
         case ActionTypes.ReDateFilter: {
             return {...state,start:0,end:9999999999999, isLoading: false}
         }
-        case ActionTypes.DeleteOrdersSuccess: {
-            let newOrderList = state.orderList;
-
-            for(let i=0;i<newOrderList.length;i++){
-                for(let j=0;j<action.orderIdList.length;j++) {
-                    if (newOrderList[i].orderId === action.orderIdList[j]) {
-                        newOrderList.remove(i);
-                    }
-                }
+        case ActionTypes.FetchOrderInfoSuccess: {
+            const data  = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state,isLoading:false}
+            }else{
+                return {...state ,orderInfo:data.orderInfo,isLoading:false}
             }
-            message.success("删除订单成功");
-            return {...state, orderList:newOrderList,isLoading: false}
+        }
+        case ActionTypes.DeleteOrdersSuccess: {
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("删除订单成功");
+            }
+            return {...state,isLoading:false}
         }
         case ActionTypes.Failure: {
             message.error(action.error);

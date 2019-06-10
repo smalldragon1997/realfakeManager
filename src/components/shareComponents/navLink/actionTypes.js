@@ -11,3 +11,7 @@ export const Success = 'navLink/success';
 export const Failure = 'navLink/failure';
 
 export const SaveInfo = 'navLink/SaveInfo';
+
+export const Exit = 'navLink/Exit';
+
+export const ExitSuccess = 'navLink/ExitSuccess';

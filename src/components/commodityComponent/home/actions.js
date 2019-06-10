@@ -4,9 +4,9 @@ export const Start = () => ({
     type : ActionType.Start
 });
 
-export const Success = (auths) => ({
+export const Success = (result) => ({
     type : ActionType.Success,
-    auths
+    result
 });
 
 export const Failure = (error) => ({
@@ -14,18 +14,17 @@ export const Failure = (error) => ({
     error
 });
 
-export const Fetching = (jwt) => ({
-    type : ActionType.Fetching,
+export const Fetching = () => ({
+    type : ActionType.Fetching
+});
+
+
+export const Update = (jwt,homeInfo) => ({
+    type : ActionType.Update,homeInfo,
     jwt
 });
 
 
-export const Update = (jwt,seriesInfo) => ({
-    type : ActionType.Update,seriesInfo,
-    jwt
-});
-
-
-export const UpdateSuccess = (seriesInfo) => ({
-    type : ActionType.UpdateSuccess,seriesInfo
+export const UpdateSuccess = (result) => ({
+    type : ActionType.UpdateSuccess,result
 });

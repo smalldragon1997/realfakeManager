@@ -14,25 +14,8 @@ export const Failure = (error) => ({
     error
 });
 
-export const Fetching = (jwt) => ({
-    type : ActionType.Fetching,
+export const Fetching = (searchInfo,jwt) => ({
+    type : ActionType.Fetching,searchInfo,
     jwt
 });
 
-
-export const Filter = (filter,key,start,end,isSuccess) => ({
-    type : ActionType.Filter,
-    filter,key,start,end,isSuccess
-});
-
-export const ReFilter = () => ({
-    type : ActionType.ReFilter
-});
-
-export const FetchOperation = (jwt) => ({
-    type : ActionType.FetchOperation,jwt
-});
-
-export const FetchOperationSuccess = (result) => ({
-    type : ActionType.FetchOperationSuccess,result
-});

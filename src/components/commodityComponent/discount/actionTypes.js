@@ -23,3 +23,6 @@ export const Add = 'discount/Add';
 export const AddSuccess = 'discount/AddSuccess';
 
 export const Edit = 'discount/Edit';
+
+export const FetchDiscountInfo = 'discount/FetchDiscountInfo';
+export const FetchDiscountInfoSuccess = 'discount/FetchDiscountInfoSuccess';

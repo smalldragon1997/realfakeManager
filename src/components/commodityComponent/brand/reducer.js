@@ -3,7 +3,9 @@ import {message} from 'antd';
 
 const initState = {
     isLoading: false,   // 是否加载中
-    brandId: undefined // auth
+    brandId: undefined, // auth
+    brandList:[],
+    brandInfo:undefined,
 };
 
 //初始化status为载入状态
@@ -14,21 +16,48 @@ export default (state = initState, action) => {
             return {...state, isLoading: true}
         }
         case ActionTypes.Success: {
-            return {...state,  isLoading: false}
+            const data = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state, isLoading: false}
+            }else{
+                return {...state, brandList:data.brandList, isLoading: false}
+            }
+        }
+        case ActionTypes.FetchBrandInfoSuccess: {
+            const data = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state, isLoading: false}
+            }else{
+                return {...state, brandInfo:data.brandInfo, isLoading: false}
+            }
         }
         case ActionTypes.Edit: {
             return {...state, brandId:action.brandId, isLoading: false}
         }
         case ActionTypes.AddBrandSuccess: {
-            message.success("添加品牌成功");
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("添加品牌成功");
+            }
             return {...state, isLoading: false}
         }
         case ActionTypes.UpdateBrandSuccess: {
-            message.success("更新品牌信息成功");
-            return {...state,isLoading: false}
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("更新品牌信息成功");
+            }
+            return {...state, isLoading: false}
         }
         case ActionTypes.DeleteBrandSuccess: {
-            message.success("删除成功");
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("删除品牌成功");
+            }
             return {...state, isLoading: false}
         }
         case ActionTypes.Failure: {

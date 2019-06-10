@@ -9,7 +9,7 @@ function* fetchAfterSales(action) {
         const result = yield call(Api.fetchAfterSales,{
             jwt:action.jwt
         });
-        yield put(Actions.Success(result.data.data));
+        yield put(Actions.Success(result.data));
     } catch (e) {
         console.log(e);
         yield put(Actions.Failure("获取售后列表时发生错误："+e.toString()));
@@ -20,6 +20,23 @@ export function* watchFetchAfterSales() {
     yield takeEvery(ActionTypes.Fetching, fetchAfterSales);
 }
 
+
+function* fetchAfterSaleInfo(action) {
+    try {
+        const result = yield call(Api.fetchAfterSaleInfo,{
+            jwt:action.jwt,
+            aftId:action.aftId
+        });
+        yield put(Actions.FetchAfterSaleInfoSuccess(result.data));
+    } catch (e) {
+        console.log(e);
+        yield put(Actions.Failure("获取售后信息时发生错误："+e.toString()));
+    }
+}
+
+export function* watchFetchAfterSaleInfo() {
+    yield takeEvery(ActionTypes.FetchAfterSaleInfo, fetchAfterSaleInfo);
+}
 
 
 // 获取未付款订单列表
@@ -44,12 +61,16 @@ export function* watchDeleteDoneAfterSales() {
 // 获取未付款订单列表
 function* agreeAfterSales(action) {
     try {
-        // const result = yield call(Api.fetchPays,{
-        //     AfterSaleIdList:action.AfterSaleIdList,
-        //     jwt:action.jwt
-        // });
-        // yield put(Actions.Success(result.data.data));
-        yield put(Actions.AgreeAfterSalesSuccess(action.aftIdList,action.message));
+        const result = yield call(Api.updateAfterSaleInfo,{
+            orderId:action.orderId,
+            aftId:action.aftId,
+            message:action.message,
+            state:3,
+            afterPics:[],
+            resultPics:[],
+            jwt:action.jwt
+        });
+        yield put(Actions.AgreeAfterSalesSuccess(result.data));
     } catch (e) {
         console.log(e);
         yield put(Actions.Failure("同意售后时发生错误："+e.toString()));
@@ -95,4 +116,22 @@ function* closeAfterSales(action) {
 
 export function* watchCloseAfterSales() {
     yield takeEvery(ActionTypes.CloseAfterSales, closeAfterSales);
+}
+
+function* leaveMsgAfterSales(action) {
+    try {
+        // const result = yield call(Api.fetchPays,{
+        //     AfterSaleIdList:action.AfterSaleIdList,
+        //     jwt:action.jwt
+        // });
+        // yield put(Actions.Success(result.data.data));
+        yield put(Actions.LeaveMsgAfterSalesSuccess(action.aftIdList));
+    } catch (e) {
+        console.log(e);
+        yield put(Actions.Failure("留言售后时发生错误："+e.toString()));
+    }
+}
+
+export function* watchLeaveMsgAfterSales() {
+    yield takeEvery(ActionTypes.LeaveMsgAfterSales, leaveMsgAfterSales);
 }

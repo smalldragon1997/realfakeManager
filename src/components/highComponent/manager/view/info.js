@@ -42,34 +42,16 @@ class info extends React.Component {
     componentDidMount() {
         // 获取权限列表
         this.props.onFetchAuths();
-
-        // 管理员拥有的权限
-        const auths = this.props.auths;
         // 管理员信息
-        const managerInfo = this.props.managerInfo;
-        // 默认的权限选中内容
-        const defaultOptions = [];
+        this.props.onFetchManagerInfo(this.props.manId);
 
-        // 根据权限内容改变权限选中状态
-        if (auths.length !== 0 && managerInfo !== undefined) {
-            for (let i = 0; i < auths.length; i++) {
-                for (let j = 0; j < managerInfo.auth.length; j++) {
-                    if (auths[i].authName === managerInfo.auth[j]) {
-                        defaultOptions.push(auths[i].describe);
-                    }
-                }
-            }
-            this.setState({
-                nickname:managerInfo.nickname,
-                checkedList: defaultOptions
-            })
-        }
     }
 
     render() {
         const {
             auths, // 权限列表
             managerInfo, // 管理员信息
+            defaultCheckedList, // 默认权限
             isLoading, // 是否加载中
             onDelManager, // 删除管理员
             onUpdateManager, // 更新管理员信息
@@ -109,7 +91,7 @@ class info extends React.Component {
                                         昵称：
                                     </Col>
                                     <Col span={18}>
-                                        <Input style={{width: "70%"}} defaultValue={managerInfo.nickname}
+                                        <Input style={{width: "70%"}} placeholder={managerInfo.nickname}
                                                onChange={(e) => {
                                                    this.setState({
                                                        nickname: e.target.value
@@ -171,7 +153,7 @@ class info extends React.Component {
                                             全选
                                         </Checkbox>
                                         <br/>
-                                        <CheckboxGroup options={plainOptions} value={this.state.checkedList}
+                                        <CheckboxGroup options={plainOptions} value={checkedList}
                                                        onChange={(checkedList) => {
                                                            this.setState({
                                                                checkedList,
@@ -179,6 +161,18 @@ class info extends React.Component {
                                                                checkAll: checkedList.length === plainOptions.length,
                                                            });
                                                        }}/>
+                                    </Col>
+                                </Row>
+                                <Row style={{padding: "3%", paddingTop: 0}}>
+                                    <Col span={6} style={{textAlign: "right"}}>
+                                        当前拥有权限：
+                                    </Col>
+                                    <Col span={14}>
+                                        {
+                                            defaultCheckedList.length===0?"无任何权限":defaultCheckedList.map(item=>(
+                                                item+" "
+                                            ))
+                                        }
                                     </Col>
                                 </Row>
                                 {/*按钮*/}
@@ -196,23 +190,30 @@ class info extends React.Component {
                                                             }
                                                         }
                                                     }
-                                                    onUpdateManager(managerInfo.manId, resultAuths, nickname);
-                                                    this.props.history.push("/high/manager/");
+                                                    onUpdateManager({
+                                                        manId:managerInfo.manId,
+                                                        auths:resultAuths,
+                                                        icon:managerInfo.icon,
+                                                        nickname:nickname===undefined||nickname===""?managerInfo.nickname:nickname,
+                                                        isForbidden:managerInfo.isForbidden,
+                                                        isSuper:managerInfo.isSuper
+                                                    });
+                                                    // this.props.history.push("/high/manager/");
                                                 }}
                                         >修改</Button>
                                     </Col>
-                                    <Col xs={24} sm={24} md={24} lg={24} xl={3} xxl={3} style={{padding: "1%"}}>
-                                        <Popconfirm placement="top" title={"确定删除管理员 "+managerInfo.nickname+" 吗？"} onConfirm={()=>{
-                                            onDelManager(managerInfo.manId);
-                                            this.props.history.push("/high/manager/");
-                                        }} okText="确认" cancelText="点错了">
-                                            <Button
-                                                type={"danger"}
-                                                style={{width: "100%"}}
-                                                onClick={() => {
-                                                }}>删除</Button>
-                                        </Popconfirm>
-                                    </Col>
+                                    {/*<Col xs={24} sm={24} md={24} lg={24} xl={3} xxl={3} style={{padding: "1%"}}>*/}
+                                        {/*<Popconfirm placement="top" title={"确定删除管理员 "+managerInfo.nickname+" 吗？"} onConfirm={()=>{*/}
+                                            {/*onDelManager(managerInfo.manId);*/}
+                                            {/*this.props.history.push("/high/manager/");*/}
+                                        {/*}} okText="确认" cancelText="点错了">*/}
+                                            {/*<Button*/}
+                                                {/*type={"danger"}*/}
+                                                {/*style={{width: "100%"}}*/}
+                                                {/*onClick={() => {*/}
+                                                {/*}}>删除</Button>*/}
+                                        {/*</Popconfirm>*/}
+                                    {/*</Col>*/}
                                     <Col xs={24} sm={24} md={24} lg={24} xl={3} xxl={3} style={{padding: "1%"}}>
                                         <Button
                                             style={{width: "100%"}}
@@ -237,8 +238,10 @@ const mapStateToProps = (state) => {
     const manager = state.high.manager;
     return {
         auths: manager.auths,
-        managerInfo: getManagerByManId(manager.managerList,"manId",manager.manId),
+        manId: manager.manId,
+        managerInfo: manager.managerInfo,
         managerList: manager.managerList,
+        defaultCheckedList:manager.defaultCheckedList,
         isLoading: manager.isLoading
     }
 };
@@ -265,9 +268,13 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(Actions.Start());
             dispatch(Actions.FetchAuthList(localStorage.getItem("RealFakeManagerJwt")));
         },
-        onUpdateManager: (manId, auths, nickname) => {
+        onFetchManagerInfo: (manId) => {
             dispatch(Actions.Start());
-            dispatch(Actions.UpdateManager(localStorage.getItem("RealFakeManagerJwt"), manId, auths, nickname));
+            dispatch(Actions.FetchManagerInfo(manId,localStorage.getItem("RealFakeManagerJwt")));
+        },
+        onUpdateManager: (managerInfo) => {
+            dispatch(Actions.Start());
+            dispatch(Actions.UpdateManager(managerInfo,localStorage.getItem("RealFakeManagerJwt")));
         },
     }
 };

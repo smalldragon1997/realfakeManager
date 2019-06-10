@@ -26,4 +26,10 @@ export const Filter = 'commAll/Filter';
 export const ReFilter = 'commAll/ReFilter';
 
 
+export const FetchCommodity = 'commAll/FetchCommodity';
+export const FetchCommoditySuccess = 'commAll/FetchCommoditySuccess';
+
+
+
+
 

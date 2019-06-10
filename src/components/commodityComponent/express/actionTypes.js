@@ -23,3 +23,6 @@ export const Add = 'express/Add';
 export const AddSuccess = 'express/AddSuccess';
 
 export const Edit = 'express/Edit';
+
+export const FetchExpressInfo = 'express/FetchExpressInfo';
+export const FetchExpressInfoSuccess = 'express/FetchExpressInfoSuccess';

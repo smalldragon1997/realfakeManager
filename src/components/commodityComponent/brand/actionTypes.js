@@ -23,3 +23,7 @@ export const AddBrand = 'brand/AddBrand';
 export const AddBrandSuccess = 'manager/AddBrandSuccess';
 
 export const Edit = 'brand/Edit';
+
+export const FetchBrandInfo = 'brand/FetchBrandInfo';
+
+export const FetchBrandInfoSuccess = 'brand/FetchBrandInfoSuccess';

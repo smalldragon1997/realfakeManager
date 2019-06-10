@@ -14,8 +14,8 @@ class navLink extends React.Component {
         });
         // 如果存在jwt，则验证令牌有效性
         const jwt = localStorage.getItem("RealFakeManagerJwt");
-        if(jwt!==undefined&&jwt!==null){
-            this.props.onAuthJwt(localStorage.getItem("RealFakeManagerJwt"));
+        if(jwt!==undefined&&jwt!==null&&jwt!==""){
+            this.props.onAuthJwt(jwt);
         }
     }
 
@@ -55,15 +55,15 @@ class navLink extends React.Component {
                                             </Menu.Item>
                                         ):null
                                     }
-                                    {
-                                        auth.see_all||info.isSuper?(
-                                            <Menu.Item key="all" onClick={()=>{
-                                                this.props.history.push("/all");
-                                            }}>
-                                                流量总览
-                                            </Menu.Item>
-                                        ):null
-                                    }
+                                    {/*{*/}
+                                        {/*auth.see_all||info.isSuper?(*/}
+                                            {/*<Menu.Item key="all" onClick={()=>{*/}
+                                                {/*this.props.history.push("/all");*/}
+                                            {/*}}>*/}
+                                                {/*流量总览*/}
+                                            {/*</Menu.Item>*/}
+                                        {/*):null*/}
+                                    {/*}*/}
                                     {
                                         auth.see_order||info.isSuper?(
                                             <Menu.Item key="order" onClick={()=>{
@@ -82,15 +82,15 @@ class navLink extends React.Component {
                                             </Menu.Item>
                                         ):null
                                     }
-                                    {
-                                        auth.see_user||info.isSuper?(
-                                            <Menu.Item key="user" onClick={()=>{
-                                                this.props.history.push("/user/all");
-                                            }}>
-                                                用户管理
-                                            </Menu.Item>
-                                        ):null
-                                    }
+                                    {/*{*/}
+                                        {/*auth.see_user||info.isSuper?(*/}
+                                            {/*<Menu.Item key="user" onClick={()=>{*/}
+                                                {/*this.props.history.push("/user/all");*/}
+                                            {/*}}>*/}
+                                                {/*用户管理*/}
+                                            {/*</Menu.Item>*/}
+                                        {/*):null*/}
+                                    {/*}*/}
                                     <Menu.Item key="person" onClick={()=>{
                                         this.props.history.push("/person/info");
                                     }}>

@@ -2,18 +2,11 @@ import * as ActionTypes from './actionTypes';
 import {message} from 'antd';
 import commodity from "../../../containers/commodity/view/commodity";
 
-// 默认
-const initFilter = {
-    brandId:undefined,
-    seriesId:undefined,
-    typeId:undefined,
-    uniteId:undefined,
-    price:undefined,
-    sort:"like",
-    desc:true,
-};
 const initState = {
-    ...initFilter,
+
+    commList: [], // 商品列表
+
+    commodityInfo:undefined,
     commId:undefined,
     isLoading: false,   // 是否加载中
 };
@@ -25,38 +18,50 @@ export default (state = initState, action) => {
             return {...state, isLoading: true}
         }
         case ActionTypes.Success: {
-            message.succuss("商品获取成功");
-            return {...state, commList:action.result, isLoading: false}
+
+            const data = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state, isLoading: false}
+            }else{
+                message.success("商品搜索成功");
+                return {...state, commList:data.commodityList, isLoading: false}
+            }
         }
         case ActionTypes.Edit: {
             return {...state, commId:action.commId, isLoading: false}
         }
-        case ActionTypes.Filter: {
-            return {
-                ...state,
-                brandId:action.brandId,
-                seriesId:action.seriesId,
-                typeId:action.typeId,
-                uniteId:action.uniteId,
-                price:action.price,
-                sort:action.sort,
-                desc:action.desc,
-                isLoading: false
+        case ActionTypes.FetchCommoditySuccess: {
+            const data = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state, isLoading: false}
+            }else{
+                return {...state, commodityInfo:data.commodityInfo, isLoading: false}
             }
         }
-        case ActionTypes.ReFilter: {
-            return {...state,...initFilter, isLoading: false}
-        }
         case ActionTypes.DeleteCommoditySuccess: {
-            message.success("删除商品成功");
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("删除商品成功");
+            }
             return {...state,isLoading: false}
         }
         case ActionTypes.UpdateCommoditySuccess: {
-            message.success("更新商品成功");
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("更新商品成功");
+            }
             return {...state,isLoading: false}
         }
         case ActionTypes.AddCommoditySuccess: {
-            message.success("添加商品成功");
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("添加商品成功");
+            }
             return {...state,isLoading: false}
         }
         case ActionTypes.Failure: {

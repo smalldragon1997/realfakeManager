@@ -14,11 +14,32 @@ export const Failure = (error) => ({
     error
 });
 
+
+
+export const FetchAfterSaleInfoSuccess = (result) => ({
+    type : ActionType.FetchAfterSaleInfoSuccess,
+    result
+});
+
+export const FetchAfterSaleInfo = (aftId,jwt) => ({
+    type : ActionType.FetchAfterSaleInfo,aftId,jwt
+});
+
+
 export const Fetching = (jwt) => ({
     type : ActionType.Fetching,
     jwt
 });
 
+export const LeaveMsgAfterSalesSuccess = (aftIdList) => ({
+    type : ActionType.LeaveMsgAfterSalesSuccess,
+    aftIdList
+});
+
+export const LeaveMsgAfterSales = (jwt,aftIdList,message) => ({
+    type : ActionType.LeaveMsgAfterSales,
+    jwt,aftIdList,message
+});
 
 export const DeleteAfterSales = (jwt,aftIdList) => ({
     type : ActionType.DeleteAfterSales,
@@ -30,14 +51,13 @@ export const DeleteAfterSalesSuccess = (aftIdList) => ({
     aftIdList
 });
 
-export const AgreeAfterSales = (jwt,aftIdList,message) => ({
+export const AgreeAfterSales = (jwt,aftId,message,orderId) => ({
     type : ActionType.AgreeAfterSales,
-    jwt,aftIdList,message
+    jwt,aftId,message,orderId
 });
 
-export const AgreeAfterSalesSuccess = (aftIdList,message) => ({
-    type : ActionType.AgreeAfterSalesSuccess,
-    aftIdList,message
+export const AgreeAfterSalesSuccess = (result) => ({
+    type : ActionType.AgreeAfterSalesSuccess,result
 });
 
 export const DisAgreeAfterSales = (jwt,aftIdList,message,imageList) => ({

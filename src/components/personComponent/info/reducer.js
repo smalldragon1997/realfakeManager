@@ -16,7 +16,19 @@ export default (state = initState, action) => {
             return {...state,  isLoading: false}
         }
         case ActionTypes.UpdateSuccess: {
-            message.success("更新个人信息成功");
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("更新个人信息成功,请重新登录");
+            }
+            return {...state,isLoading: false}
+        }
+        case ActionTypes.UpdatePwdSuccess: {
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("更新密码成功,请重新登录");
+            }
             return {...state,isLoading: false}
         }
         case ActionTypes.Failure: {

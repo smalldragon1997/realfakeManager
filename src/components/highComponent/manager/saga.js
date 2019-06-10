@@ -2,6 +2,7 @@ import {call, put, takeEvery} from 'redux-saga/effects'
 import * as Api from '../../../api';
 import * as Actions from './actions';
 import * as ActionTypes from './actionTypes';
+import md5 from 'md5';
 
 // 获取管理员列表
 function* fetchManagers(action) {
@@ -9,7 +10,7 @@ function* fetchManagers(action) {
         const result = yield call(Api.fetchManagers,{
             jwt:action.jwt
         });
-        yield put(Actions.Success(result.data.data));
+        yield put(Actions.Success(result.data));
     } catch (e) {
         console.log(e);
         yield put(Actions.Failure("获取管理员列表时发生错误："+e.toString()));
@@ -20,6 +21,23 @@ export function* watchFetchManagers() {
     yield takeEvery(ActionTypes.Fetching, fetchManagers);
 }
 
+// 获取管理员信息
+function* fetchManager(action) {
+    try {
+        const result = yield call(Api.fetchManager,{
+            jwt:action.jwt,
+            manId:action.manId
+        });
+        yield put(Actions.FetchManagerInfoSuccess(result.data));
+    } catch (e) {
+        console.log(e);
+        yield put(Actions.Failure("获取管理员信息时发生错误："+e.toString()));
+    }
+}
+
+export function* watchFetchManager() {
+    yield takeEvery(ActionTypes.FetchManagerInfo, fetchManager);
+}
 // 删除管理员
 function* delManager(action) {
     try {
@@ -43,11 +61,11 @@ export function* watchDelManager() {
 function* forbiddenManager(action) {
     try {
         // 禁用管理员Api
-        // const result = yield call(Api.delManager,{
-        //     manIdList:action.manIdList,
-        //     jwt:action.jwt
-        // });
-        yield put(Actions.ForbidManagerSuccess(action.manIdList));
+        const result = yield call(Api.forbidManager,{
+            manIdList:action.manIdList,
+            jwt:action.jwt
+        });
+        yield put(Actions.ForbidManagerSuccess(result.data));
     } catch (e) {
         console.log(e);
         yield put(Actions.Failure("禁用管理员时发生错误："+e.toString()));
@@ -62,11 +80,11 @@ export function* watchForbidManager() {
 function* cancelForbidManager(action) {
     try {
         // 取消禁用管理员Api
-        // const result = yield call(Api.delManager,{
-        //     manIdList:action.manId,
-        //     jwt:action.jwt
-        // });
-        yield put(Actions.CanCelForbidManagerSuccess(action.manIdList));
+        const result = yield call(Api.enableManager,{
+            manIdList:action.manIdList,
+            jwt:action.jwt
+        });
+        yield put(Actions.CanCelForbidManagerSuccess(result.data));
     } catch (e) {
         console.log(e);
         yield put(Actions.Failure("取消禁用管理员时发生错误："+e.toString()));
@@ -83,7 +101,7 @@ function* fetchAuthList(action) {
         const result = yield call(Api.fetchAuthList,{
             jwt:action.jwt
         });
-        yield put(Actions.FetchAuthListSuccess(result.data.data.auths));
+        yield put(Actions.FetchAuthListSuccess(result.data));
     } catch (e) {
         console.log(e);
         yield put(Actions.Failure("获取权限列表时发生错误："+e.toString()));
@@ -97,13 +115,16 @@ export function* watchFetchAuthList() {
 // 更新管理员信息
 function* updateManager(action) {
     try {
-        // const result = yield call(Api.updateManager,{
-        //     manId:action.manId,
-        //     auths:JSON.stringify(action.auths),
-        //     nickname:action.nickname,
-        //     jwt:action.jwt
-        // });
-        yield put(Actions.UpdateManagerSuccess(action.manId,action.auths,action.nickname));
+        const result = yield call(Api.updateMangerInfo,{
+            manId:action.managerInfo.manId,
+            auths:action.managerInfo.auths,
+            isSuper:action.managerInfo.isSuper,
+            icon:action.managerInfo.icon,
+            nickname:action.managerInfo.nickname,
+            isForbidden:action.managerInfo.isForbidden,
+            jwt:action.jwt
+        });
+        yield put(Actions.UpdateManagerSuccess(result.data));
     } catch (e) {
         console.log(e);
         yield put(Actions.Failure("更新管理员信息时发生错误："+e.toString()));
@@ -117,15 +138,16 @@ export function* watchUpdateManager() {
 // 添加管理员信息
 function* addManager(action) {
     try {
-        // const result = yield call(Api.addManager,{
-        //     username:action.username,
-        //     password:action.password,
-        //     isForbidden:action.isForbidden,
-        //     auths:JSON.stringify(action.auths),
-        //     nickname:action.auths,
-        //     jwt:action.jwt
-        // });
-        yield put(Actions.AddManagerSuccess());
+        const result = yield call(Api.addManager,{
+            username:action.managerInfo.username,
+            pwdWithMD5:md5(action.managerInfo.password),
+            isForbidden:action.managerInfo.isForbidden,
+            icon:action.managerInfo.icon,
+            auths:action.managerInfo.auths,
+            nickname:action.managerInfo.nickname,
+            jwt:action.jwt
+        });
+        yield put(Actions.AddManagerSuccess(result.data));
     } catch (e) {
         console.log(e);
         yield put(Actions.Failure("添加管理员时发生错误："+e.toString()));

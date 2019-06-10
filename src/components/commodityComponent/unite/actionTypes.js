@@ -23,3 +23,8 @@ export const Add = 'unite/Add';
 export const AddSuccess = 'unite/AddSuccess';
 
 export const Edit = 'unite/Edit';
+
+
+export const FetchUniteInfo = 'unite/FetchUniteInfo';
+
+export const FetchUniteInfoSuccess = 'unite/FetchUniteInfoSuccess';

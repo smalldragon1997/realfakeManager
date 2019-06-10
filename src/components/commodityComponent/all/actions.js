@@ -14,9 +14,8 @@ export const Failure = (error) => ({
     error
 });
 
-export const Fetching = (jwt,key,start,end) => ({
-    type : ActionType.Fetching,
-    jwt,key,start,end
+export const Fetching = (filterInfo) => ({
+    type : ActionType.Fetching,filterInfo
 });
 
 
@@ -25,9 +24,9 @@ export const DeleteCommodity = (jwt,commId) => ({
     jwt,commId
 });
 
-export const DeleteCommoditySuccess = (commId) => ({
+export const DeleteCommoditySuccess = (result) => ({
     type : ActionType.DeleteCommoditySuccess,
-    commId
+    result
 });
 
 export const UpdateCommodity = (jwt,commInfo) => ({
@@ -35,9 +34,9 @@ export const UpdateCommodity = (jwt,commInfo) => ({
     jwt,commInfo
 });
 
-export const UpdateCommoditySuccess = (commInfo) => ({
+export const UpdateCommoditySuccess = (result) => ({
     type : ActionType.UpdateCommoditySuccess,
-    commInfo
+    result
 });
 
 export const AddCommodity = (jwt,commInfo) => ({
@@ -45,21 +44,25 @@ export const AddCommodity = (jwt,commInfo) => ({
     jwt,commInfo
 });
 
-export const AddCommoditySuccess = (commInfo) => ({
+export const AddCommoditySuccess = (result) => ({
     type : ActionType.AddCommoditySuccess,
-    commInfo
+    result
 });
 
-export const Filter = (brandId,seriesId,typeId,uniteId,price,sort,desc) => ({
+export const Filter = (filterInfo) => ({
     type : ActionType.Filter,
-    brandId,seriesId,typeId,uniteId,price,sort,desc
+    filterInfo
 });
 
-export const ReFilter = () => ({
-    type : ActionType.ReFilter,
-});
 export const Edit = (commId) => ({
     type : ActionType.Edit,commId
 });
 
 
+
+export const FetchCommodity = (commId) => ({
+    type : ActionType.FetchCommodity,commId
+});
+export const FetchCommoditySuccess = (result) => ({
+    type : ActionType.FetchCommoditySuccess,result
+});

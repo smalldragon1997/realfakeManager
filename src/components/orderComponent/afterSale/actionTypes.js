@@ -15,6 +15,9 @@ export const Edit = 'afterSale/Edit';
 export const DeleteAfterSales = 'afterSale/DeleteAfterSales';
 export const DeleteAfterSalesSuccess = 'afterSale/DeleteAfterSalesSuccess';
 
+export const LeaveMsgAfterSales = 'afterSale/LeaveMsgAfterSales';
+export const LeaveMsgAfterSalesSuccess = 'afterSale/LeaveMsgAfterSalesSuccess';
+
 export const AgreeAfterSales = 'afterSale/AgreeAfterSales';
 export const AgreeAfterSalesSuccess = 'afterSale/AgreeAfterSalesSuccess';
 
@@ -29,5 +32,8 @@ export const ReFilter = 'afterSale/ReFilter';
 
 export const DateFilter = 'afterSale/DateFilter';
 export const ReDateFilter = 'afterSale/ReDateFilter';
+
+export const FetchAfterSaleInfo = 'afterSale/FetchAfterSaleInfo';
+export const FetchAfterSaleInfoSuccess = 'afterSale/FetchAfterSaleInfoSuccess';
 
 

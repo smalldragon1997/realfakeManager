@@ -20,7 +20,7 @@ import {
     message,
     Table,
     Tag,
-    Divider, Upload, Select,Collapse
+    Divider, Upload, Select, Collapse
 } from 'antd';
 
 const Option = Select.Option;
@@ -30,12 +30,6 @@ import ShowImages from '../../../commom/showImages'
 const Panel = Collapse.Panel;
 const CheckboxGroup = Checkbox.Group;
 const {TextArea} = Input;
-
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
 
 class info extends React.Component {
 
@@ -47,22 +41,19 @@ class info extends React.Component {
             uniteName: undefined,
             describe: undefined,
             cover: undefined,
-            manId: undefined,
             pictures: [],
             types: [],
             ids: [],
 
-
-            oldPictures: [],
             fileList: [],
             imageUrl: undefined,
         });
     }
 
     componentDidMount() {
-
-        //获取联名信息
-        this.searchUnite(this.props.uniteId);
+        if (this.props.uniteId !== undefined) {
+            this.props.onFetchUniteInfo(this.props.uniteId);
+        }
     }
 
     _cropCover() {
@@ -72,35 +63,14 @@ class info extends React.Component {
         });
     }
 
-
-    // 搜索联名
-    searchUnite(uniteId) {
-        if (uniteId !== undefined) {
-            client.get({
-                index: 'unite',
-                type: 'unite',
-                id: uniteId
-            }).then(
-                function (body) {
-                    this.setState({
-                        ...body._source,
-                        oldPictures: body._source.pictures
-                    });
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
-        }
-
-    }
-
     render() {
         const {
             uniteId,
             isLoading, // 是否加载中
             onDelete,
             onUpdate,
+            uniteInfo,
+            info
         } = this.props;
 
         const {
@@ -119,7 +89,7 @@ class info extends React.Component {
         return (
             <Spin spinning={isLoading}>
                 {
-                    uniteId === undefined ? (
+                    uniteInfo === undefined ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
@@ -131,7 +101,7 @@ class info extends React.Component {
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
-                                    <Divider>联名信息(发布管理员:{manId})</Divider>
+                                    <Divider>联名信息(发布管理员:{uniteInfo.managerInfo.nickname})</Divider>
                                 </Row>
                                 {/*联名名*/}
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
@@ -140,6 +110,7 @@ class info extends React.Component {
                                     </Col>
                                     <Col span={18}>
                                         <Input style={{width: "70%"}} value={uniteName}
+                                               placeholder={uniteInfo.uniteName}
                                                onChange={(e) => {
                                                    this.setState({
                                                        uniteName: e.target.value
@@ -155,7 +126,7 @@ class info extends React.Component {
                                     <Col span={18}>
                                         <TextArea
                                             rows={5}
-                                            style={{width: "70%"}} value={describe}
+                                            style={{width: "70%"}} value={describe} placeholder={uniteInfo.describe}
                                             onChange={(e) => {
                                                 this.setState({
                                                     describe: e.target.value
@@ -171,17 +142,22 @@ class info extends React.Component {
                                     <Col span={12}>
 
                                         <Collapse bordered={false} defaultActiveKey={['1']}>
-                                            <Panel header="选择联名图片" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
-                                                <ShowImages images={oldPictures} size={70}/><br/>
+                                            <Panel header="选择联名图片" key="1"
+                                                   style={{background: '#f7f7f7', border: 0, overflow: 'hidden'}}>
+                                                <ShowImages
+                                                    images={uniteInfo.unitePicList.reduce((list, next) => (list.concat(next.url)), [])}
+                                                    size={70}/><br/>
+
                                                 (此操作将删除历史图片)<br/>
                                                 <Upload
+                                                    headers={{Authorization: "bearer " + localStorage.getItem("RealFakeManagerJwt")}}
                                                     accept={"image/*"}
                                                     multiple
-                                                    action="/mock/upload"
+                                                    action="/api/v1/data/file"
                                                     listType="picture-card"
                                                     fileList={fileList}
                                                     onChange={({fileList}) => this.setState({
-                                                        types: fileList.reduce((list, next) => (list.concat("commodity")), []),
+                                                        types: fileList.reduce((list, next) => (list.concat("commodities")), []),
                                                         ids: fileList.reduce((list, next) => (list.concat("")), []),
                                                         pictures: fileList.reduce((list, next) => (list.concat(next.name)), []),
                                                         fileList
@@ -204,58 +180,69 @@ class info extends React.Component {
                                     <Col span={12}>
 
                                         <Collapse bordered={false} defaultActiveKey={['1']}>
-                                            <Panel header="设置图片跳转" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
+                                            <Panel header="设置图片跳转" key="1"
+                                                   style={{background: '#f7f7f7', border: 0, overflow: 'hidden'}}>
 
                                                 (按图片顺序)
                                                 {
-                                                    pictures.map((item, index) => {
-                                                        return (
-                                                            <Row style={{padding: 5}}>
-                                                                <Col span={8}>
-                                                                    <Select
-                                                                        value={types[index] === "" ? ("commodity") : (types[index])}
-                                                                        notFoundContent={"没有匹配内容"} allowClear
-                                                                        dropdownMatchSelectWidth={false}
-                                                                        disabled={isLoading}
-                                                                        showSearch
-                                                                        style={{width: "100%", paddingRight: 5}}
-                                                                        placeholder="链接类型"
-                                                                        optionFilterProp="children"
-                                                                        onChange={(e) => {
-                                                                            let newTypes = types;
-                                                                            newTypes[index] = e;
-                                                                            this.setState({types: newTypes});
-                                                                        }}
-                                                                        filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
-                                                                    >
-                                                                        <Option value={"commodity"}
-                                                                                key={"commodity"}>跳转商品</Option>
-                                                                        <Option value={"unite"} key={"unite"}>跳转联名</Option>
-                                                                        <Option value={"series"} key={"series"}>跳转系列</Option>
-                                                                        <Option value={"unite"} key={"unite"}>跳转联名</Option>
-                                                                    </Select>
-                                                                </Col>
-                                                                <Col span={8}>
-                                                                    <Row type={"flex"} align={"middle"}>
-                                                                        <Col span={14} style={{textAlign: "right"}}>
-                                                                            跳转编号：
-                                                                        </Col>
-                                                                        <Col span={10}>
-                                                                            <Input value={ids[index]} onChange={(e) => {
-                                                                                let newIds = ids;
-                                                                                newIds[index] = e.target.value;
-                                                                                this.setState({ids: newIds});
-                                                                            }}/>
-                                                                        </Col>
-                                                                    </Row>
-                                                                </Col>
+                                                    pictures.length === 0 ? "请上传图片后设置图片跳转" :
+                                                        pictures.map((item, index) => {
+                                                            return (
+                                                                <Row style={{padding: 5}}>
+                                                                    <Col span={8}>
+                                                                        <Select
+                                                                            value={types[index] === "" ? ("commodities") : (types[index])}
+                                                                            notFoundContent={"没有匹配内容"} allowClear
+                                                                            dropdownMatchSelectWidth={false}
+                                                                            disabled={isLoading}
+                                                                            showSearch
+                                                                            style={{width: "100%", paddingRight: 5}}
+                                                                            placeholder="链接类型"
+                                                                            optionFilterProp="children"
+                                                                            onChange={(e) => {
+                                                                                let newTypes = types;
+                                                                                newTypes[index] = e;
+                                                                                this.setState({types: newTypes});
+                                                                            }}
+                                                                            filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                                                                        >
+                                                                            <Option value={"commodities"}
+                                                                                    key={"commodity"}>跳转商品</Option>
+                                                                            <Option value={"brands"}
+                                                                                    key={"brand"}>跳转品牌</Option>
+                                                                            <Option value={"series"}
+                                                                                    key={"series"}>跳转系列</Option>
+                                                                            <Option value={"unites"}
+                                                                                    key={"unite"}>跳转联名</Option>
+                                                                        </Select>
+                                                                    </Col>
+                                                                    <Col span={8}>
+                                                                        <Row type={"flex"} align={"middle"}>
+                                                                            <Col span={14} style={{textAlign: "right"}}>
+                                                                                跳转编号：
+                                                                            </Col>
+                                                                            <Col span={10}>
+                                                                                <Input value={ids[index]}
+                                                                                       onChange={(e) => {
+                                                                                           let newIds = ids;
+                                                                                           newIds[index] = e.target.value;
+                                                                                           this.setState({ids: newIds});
+                                                                                       }}/>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
 
-                                                            </Row>
-                                                        )
-                                                    })
+                                                                </Row>
+                                                            )
+                                                        })
                                                 }
                                             </Panel>
                                         </Collapse>
+                                        当前图片跳转(按顺序)<br/>{
+                                        uniteInfo.unitePicList.map((item, index) => (
+                                            <Row>{"跳转：" + item.type + " 编号：" + item.id}</Row>
+                                        ))
+                                    }
                                     </Col>
                                 </Row>
                                 {/*联名封面*/}
@@ -266,10 +253,16 @@ class info extends React.Component {
                                     <Col span={12}>
 
                                         <Collapse bordered={false} defaultActiveKey={['1']}>
-                                            <Panel header="选择联名封面" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
+                                            <Panel header="选择联名封面" key="1"
+                                                   style={{background: '#f7f7f7', border: 0, overflow: 'hidden'}}>
                                                 <Row>
                                                     {
-                                                        cover === undefined ? null : (
+                                                        cover === undefined ? (
+                                                            <Col span={10}>
+                                                                <Avatar src={uniteInfo.cover} size={160}
+                                                                        shape={"square"}/>
+                                                            </Col>
+                                                        ) : (
                                                             <Col span={10}>
                                                                 <Avatar src={cover} size={160} shape={"square"}/>
                                                             </Col>
@@ -294,9 +287,10 @@ class info extends React.Component {
                                                                 return false;
                                                             }}
                                                         >
-                                                            {imageUrl ? <Avatar src={imageUrl} size={100} shape={"square"}/> : (
-                                                                null
-                                                            )}
+                                                            {imageUrl ?
+                                                                <Avatar src={imageUrl} size={100} shape={"square"}/> : (
+                                                                    null
+                                                                )}
                                                             <div>
                                                                 <Icon type={this.state.loading ? 'loading' : 'plus'}/>
                                                                 <div className="ant-upload-text">上传封面</div>
@@ -333,38 +327,22 @@ class info extends React.Component {
                                          xxl={{span: 3, offset: 6}} style={{padding: "1%"}}>
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
-                                                    let idsFlag = false;
-                                                    for (let i=0;i<pictures.length;i++){
-                                                        if(ids[i]===""){
-                                                            idsFlag=true;
-                                                            break;
-                                                        }
-                                                    }
-                                                    if(uniteName===undefined||uniteName===""||
-                                                        describe===undefined||describe===""||
-                                                        cover===undefined||cover===""||
-                                                        pictures.length===0||
-                                                        types.length===0||
-                                                        ids.length===0||idsFlag){
-                                                        message.error("信息输入不完整");
-                                                    }else{
-                                                        onUpdate({
-                                                            uniteName: uniteName,
-                                                            describe: describe,
-                                                            cover: cover,
-                                                            pictures: pictures,
-                                                            types: types,
-                                                            ids: ids,
-                                                        });
-                                                        this.props.history.push("/commodity/unite/");
-                                                    }
-                                                    console.log(this.state);
+                                                    onUpdate({
+                                                        manId: info.manId,
+                                                        uniteId: uniteInfo.uniteId,
+                                                        uniteName: uniteName === undefined || uniteName === "" ? uniteInfo.uniteName : uniteName,
+                                                        describe: describe === undefined || describe === "" ? uniteInfo.describe : describe,
+                                                        cover: cover === undefined || cover === "" ? uniteInfo.cover : cover,
+                                                        pictures: pictures,
+                                                        types: types,
+                                                        ids: ids,
+                                                    });
                                                 }}
                                         >修改</Button>
                                     </Col>
                                     <Col xs={24} sm={24} md={24} lg={24} xl={3} xxl={3} style={{padding: "1%"}}>
 
-                                        <Popconfirm placement="top" title={"确定删除联名 " + uniteName + " 吗？"}
+                                        <Popconfirm placement="top" title={"确定删除联名 " + uniteInfo.uniteName + " 吗？"}
                                                     onConfirm={() => {
                                                         onDelete(uniteId);
                                                         this.props.history.push("/commodity/unite/");
@@ -396,8 +374,11 @@ class info extends React.Component {
 // props绑定state
 const mapStateToProps = (state) => {
     const unite = state.commodity.unite;
+    const navLink = state.navLink;
     return {
+        info: navLink.info,
         uniteId: unite.uniteId,
+        uniteInfo: unite.uniteInfo,
         isLoading: unite.isLoading
     }
 };
@@ -406,13 +387,16 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         onDelete: (uniteId) => {
-            let uniteIdList = [];
             dispatch(Actions.Start());
-            dispatch(Actions.Delete(uniteIdList.push(uniteId), localStorage.getItem("RealFakeManagerJwt")));
+            dispatch(Actions.Delete(uniteId, localStorage.getItem("RealFakeManagerJwt")));
         },
         onUpdate: (uniteInfo) => {
             dispatch(Actions.Start());
             dispatch(Actions.Update(localStorage.getItem("RealFakeManagerJwt"), uniteInfo));
+        },
+        onFetchUniteInfo: (uniteId) => {
+            dispatch(Actions.Start());
+            dispatch(Actions.FetchUniteInfo(uniteId));
         },
     }
 };

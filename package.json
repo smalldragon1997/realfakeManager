@@ -40,6 +40,7 @@
     "bizcharts": "^3.2.5-beta.4",
     "elasticsearch": "^15.2.0",
     "lrz": "^4.9.40",
+    "md5": "^2.2.1",
     "react": "^16.4.1",
     "react-cropper": "^1.0.1",
     "react-dom": "^16.4.1",

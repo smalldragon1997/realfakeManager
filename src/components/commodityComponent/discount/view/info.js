@@ -31,11 +31,6 @@ const CheckboxGroup = Checkbox.Group;
 const {TextArea} = Input;
 const Panel = Collapse.Panel;
 
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
 
 class info extends React.Component {
 
@@ -54,9 +49,9 @@ class info extends React.Component {
     }
 
     componentDidMount() {
-
-        //获取代金卷信息
-        this.searchDiscount(this.props.disId);
+        if(this.props.discountId!==undefined){
+            this.props.onFetchDiscountInfo(this.props.discountId);
+        }
     }
 
     _cropCover() {
@@ -66,34 +61,13 @@ class info extends React.Component {
         });
     }
 
-
-    // 搜索代金卷
-    searchDiscount(disId) {
-        if (disId !== undefined) {
-            client.get({
-                index: 'discount',
-                type: 'discount',
-                id: disId
-            }).then(
-                function (body) {
-                    this.setState({
-                        ...body._source,
-                    });
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
-        }
-
-    }
-
     render() {
         const {
-            disId,
             isLoading, // 是否加载中
             onDelete,
             onUpdate,
+            discountInfo,
+            info
         } = this.props;
 
         const {
@@ -107,7 +81,7 @@ class info extends React.Component {
         return (
             <Spin spinning={isLoading}>
                 {
-                    disId === undefined ? (
+                    discountInfo === undefined ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
@@ -119,7 +93,7 @@ class info extends React.Component {
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
-                                    <Divider>代金卷信息(发布管理员:{manId})</Divider>
+                                    <Divider>代金卷信息(发布管理员:{discountInfo.managerInfo.nickname})</Divider>
                                 </Row>
                                 {/*代金卷名*/}
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
@@ -127,7 +101,7 @@ class info extends React.Component {
                                         代金卷名：
                                     </Col>
                                     <Col span={18}>
-                                        <Input style={{width: "70%"}} value={disName}
+                                        <Input style={{width: "70%"}} value={disName} placeholder={discountInfo.disName}
                                                onChange={(e) => {
                                                    this.setState({
                                                        disName: e.target.value
@@ -142,7 +116,7 @@ class info extends React.Component {
                                     </Col>
                                     <Col span={18}>
                                         <Input
-                                            style={{width: "70%"}} value={price}
+                                            style={{width: "70%"}} value={price} placeholder={discountInfo.price}
                                             onChange={(e) => {
                                                 this.setState({
                                                     price: e.target.value
@@ -162,7 +136,11 @@ class info extends React.Component {
 
                                                 <Row>
                                                     {
-                                                        cover === undefined ? null : (
+                                                        cover === undefined ? (
+                                                            <Col span={10}>
+                                                                <Avatar src={discountInfo.cover} size={160} shape={"square"}/>
+                                                            </Col>
+                                                        ) : (
                                                             <Col span={10}>
                                                                 <Avatar src={cover} size={160} shape={"square"}/>
                                                             </Col>
@@ -226,19 +204,13 @@ class info extends React.Component {
                                          xxl={{span: 3, offset: 6}} style={{padding: "1%"}}>
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
-                                                    if(disName===undefined||disName===""||
-                                                        price===undefined||price===""||
-                                                        cover===undefined||cover===""){
-                                                        message.error("信息输入不完整");
-                                                    }else{
-                                                        onUpdate({
-                                                            disName: disName,
-                                                            price: price,
-                                                            cover: cover
-                                                        });
-                                                        this.props.history.push("/commodity/discount/");
-                                                    }
-                                                    console.log(this.state);
+                                                    onUpdate({
+                                                        manId:info.manId,
+                                                        disId:discountInfo.disId,
+                                                        disName: disName === undefined || disName === "" ? discountInfo.disName : disName,
+                                                        price: price === undefined || price === "" ? discountInfo.price : price,
+                                                        cover: cover === undefined || cover === "" ? discountInfo.cover : cover,
+                                                    });
                                                 }}
                                         >修改</Button>
                                     </Col>
@@ -246,7 +218,7 @@ class info extends React.Component {
 
                                         <Popconfirm placement="top" title={"确定删除代金卷 " + disName + " 吗？"}
                                                     onConfirm={() => {
-                                                        onDelete(disId);
+                                                        onDelete(discountInfo.disId);
                                                         this.props.history.push("/commodity/discount/");
                                                     }} okText="确认" cancelText="点错了">
                                             <Button
@@ -276,8 +248,11 @@ class info extends React.Component {
 // props绑定state
 const mapStateToProps = (state) => {
     const discount = state.commodity.discount;
+    const navLink = state.navLink;
     return {
-        disId: discount.disId,
+        info: navLink.info,
+        discountId: discount.discountId,
+        discountInfo:discount.discountInfo,
         isLoading: discount.isLoading
     }
 };
@@ -286,13 +261,16 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         onDelete: (disId) => {
-            let disIdList = [];
             dispatch(Actions.Start());
-            dispatch(Actions.Delete(disIdList.push(disId), localStorage.getItem("RealFakeManagerJwt")));
+            dispatch(Actions.Delete(disId, localStorage.getItem("RealFakeManagerJwt")));
         },
-        onUpdate: (expInfo) => {
+        onUpdate: (disInfo) => {
             dispatch(Actions.Start());
-            dispatch(Actions.Update(localStorage.getItem("RealFakeManagerJwt"), expInfo));
+            dispatch(Actions.Update(localStorage.getItem("RealFakeManagerJwt"), disInfo));
+        },
+        onFetchDiscountInfo: (disId) => {
+            dispatch(Actions.Start());
+            dispatch(Actions.FetchDiscountInfo(disId));
         },
     }
 };

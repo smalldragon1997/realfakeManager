@@ -20,7 +20,7 @@ import {
     message,
     Table,
     Tag,
-    Divider, Upload, Select,Collapse
+    Divider, Upload, Select, Collapse
 } from 'antd';
 
 const Option = Select.Option;
@@ -31,11 +31,6 @@ const CheckboxGroup = Checkbox.Group;
 const {TextArea} = Input;
 const Panel = Collapse.Panel;
 
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
 
 class info extends React.Component {
 
@@ -55,8 +50,9 @@ class info extends React.Component {
 
     componentDidMount() {
 
-        //获取类型信息
-        this.searchType(this.props.typeId);
+        if (this.props.typeId !== undefined) {
+            this.props.onFetchTypeInfo(this.props.typeId);
+        }
     }
 
     _cropCover() {
@@ -67,34 +63,14 @@ class info extends React.Component {
     }
 
 
-    // 搜索类型
-    searchType(typeId) {
-        if (typeId !== undefined) {
-            client.get({
-                index: 'type',
-                type: 'type',
-                id: typeId
-            }).then(
-                function (body) {
-                    this.setState({
-                        ...body._source,
-                        oldPictures: body._source.pictures
-                    });
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
-        }
-
-    }
-
     render() {
         const {
             typeId,
             isLoading, // 是否加载中
             onDelete,
             onUpdate,
+            typeInfo,
+            info,
         } = this.props;
 
         const {
@@ -108,7 +84,7 @@ class info extends React.Component {
         return (
             <Spin spinning={isLoading}>
                 {
-                    typeId === undefined ? (
+                    typeInfo === undefined ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
@@ -120,7 +96,7 @@ class info extends React.Component {
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
-                                    <Divider>类型信息(发布管理员:{manId})</Divider>
+                                    <Divider>类型信息(发布管理员:{typeInfo.managerInfo.nickname})</Divider>
                                 </Row>
                                 {/*类型名*/}
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
@@ -128,7 +104,7 @@ class info extends React.Component {
                                         类型名：
                                     </Col>
                                     <Col span={18}>
-                                        <Input style={{width: "70%"}} value={typeName}
+                                        <Input style={{width: "70%"}} value={typeName} placeholder={typeInfo.typeName}
                                                onChange={(e) => {
                                                    this.setState({
                                                        typeName: e.target.value
@@ -144,7 +120,7 @@ class info extends React.Component {
                                     <Col span={18}>
                                         <TextArea
                                             rows={5}
-                                            style={{width: "70%"}} value={describe}
+                                            style={{width: "70%"}} value={describe} placeholder={typeInfo.describe}
                                             onChange={(e) => {
                                                 this.setState({
                                                     describe: e.target.value
@@ -160,11 +136,16 @@ class info extends React.Component {
                                     <Col span={12}>
 
                                         <Collapse bordered={false} defaultActiveKey={['1']}>
-                                            <Panel header="选择类型封面" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
+                                            <Panel header="选择类型封面" key="1"
+                                                   style={{background: '#f7f7f7', border: 0, overflow: 'hidden'}}>
 
                                                 <Row>
                                                     {
-                                                        cover === undefined ? null : (
+                                                        cover === undefined? (
+                                                            <Col span={10}>
+                                                                <Avatar src={typeInfo.cover} size={160}
+                                                                        shape={"square"}/>
+                                                            </Col>) : (
                                                             <Col span={10}>
                                                                 <Avatar src={cover} size={160} shape={"square"}/>
                                                             </Col>
@@ -189,9 +170,10 @@ class info extends React.Component {
                                                                 return false;
                                                             }}
                                                         >
-                                                            {imageUrl ? <Avatar src={imageUrl} size={100} shape={"square"}/> : (
-                                                                null
-                                                            )}
+                                                            {imageUrl ?
+                                                                <Avatar src={imageUrl} size={100} shape={"square"}/> : (
+                                                                    null
+                                                                )}
                                                             <div>
                                                                 <Icon type={this.state.loading ? 'loading' : 'plus'}/>
                                                                 <div className="ant-upload-text">上传封面</div>
@@ -228,25 +210,19 @@ class info extends React.Component {
                                          xxl={{span: 3, offset: 6}} style={{padding: "1%"}}>
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
-                                                    if(typeName===undefined||typeName===""||
-                                                        describe===undefined||describe===""||
-                                                        cover===undefined||cover===""){
-                                                        message.error("信息输入不完整");
-                                                    }else{
-                                                        onUpdate({
-                                                            typeName: typeName,
-                                                            describe: describe,
-                                                            cover: cover
-                                                        });
-                                                        this.props.history.push("/commodity/type/");
-                                                    }
-                                                    console.log(this.state);
+                                                    onUpdate({
+                                                        manId: info.manId,
+                                                        typeId: typeInfo.typeId,
+                                                        typeName: typeName === undefined || typeName === "" ? typeInfo.typeName : typeName,
+                                                        describe: describe === undefined || describe === "" ? typeInfo.describe : describe,
+                                                        cover: cover === undefined || cover === "" ? typeInfo.cover : cover,
+                                                    });
                                                 }}
                                         >修改</Button>
                                     </Col>
                                     <Col xs={24} sm={24} md={24} lg={24} xl={3} xxl={3} style={{padding: "1%"}}>
 
-                                        <Popconfirm placement="top" title={"确定删除类型 " + typeName + " 吗？"}
+                                        <Popconfirm placement="top" title={"确定删除类型 " + typeInfo.typeName + " 吗？"}
                                                     onConfirm={() => {
                                                         onDelete(typeId);
                                                         this.props.history.push("/commodity/type/");
@@ -278,7 +254,10 @@ class info extends React.Component {
 // props绑定state
 const mapStateToProps = (state) => {
     const type = state.commodity.type;
+    const navLink = state.navLink;
     return {
+        info: navLink.info,
+        typeInfo: type.typeInfo,
         typeId: type.typeId,
         isLoading: type.isLoading
     }
@@ -288,13 +267,16 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         onDelete: (typeId) => {
-            let typeIdList = [];
             dispatch(Actions.Start());
-            dispatch(Actions.Delete(typeIdList.push(typeId), localStorage.getItem("RealFakeManagerJwt")));
+            dispatch(Actions.Delete(typeId, localStorage.getItem("RealFakeManagerJwt")));
         },
         onUpdate: (typeInfo) => {
             dispatch(Actions.Start());
             dispatch(Actions.Update(localStorage.getItem("RealFakeManagerJwt"), typeInfo));
+        },
+        onFetchTypeInfo: (typeId) => {
+            dispatch(Actions.Start());
+            dispatch(Actions.FetchTypeInfo(typeId));
         },
     }
 };

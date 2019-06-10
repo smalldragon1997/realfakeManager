@@ -1,6 +1,7 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import * as Actions from '../actions';
+import * as BrandActions from '../../brand/actions';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
 import lrz from 'lrz';
@@ -20,22 +21,14 @@ import {
     message,
     Table,
     Tag,
-    Divider, Upload, Select,Collapse
+    Divider, Upload, Select, Collapse
 } from 'antd';
 
 const Option = Select.Option;
-import ShowImage from '../../../commom/showImage'
-import ShowImages from '../../../commom/showImages'
 
 const Panel = Collapse.Panel;
 const CheckboxGroup = Checkbox.Group;
 const {TextArea} = Input;
-
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
 
 class info extends React.Component {
 
@@ -43,6 +36,7 @@ class info extends React.Component {
         super(props);
         this.state = ({
             // 需要提交的数据
+            brandId: undefined,
             seriesName: undefined,
             describe: undefined,
             cover: undefined,
@@ -57,7 +51,7 @@ class info extends React.Component {
     }
 
     componentDidMount() {
-
+        this.props.onFetchBrandList();
     }
 
     _cropCover() {
@@ -74,9 +68,11 @@ class info extends React.Component {
             info,
             isLoading, // 是否加载中
             onAdd,
+            brandList,
         } = this.props;
 
         const {
+            brandId,
             seriesName,
             describe,
             cover,
@@ -91,7 +87,7 @@ class info extends React.Component {
             <Spin spinning={isLoading}>
                 {
                     //权限-超级管理员-编辑类目
-                    !(info.isSuper || auth.edi_category) ? (
+                    !(info !== undefined && info.isSuper || auth.edi_category) ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
@@ -112,7 +108,7 @@ class info extends React.Component {
                                     </Col>
                                     <Col span={18}>
                                         <Input placeholder={"输入系列名"}
-                                            style={{width: "70%"}} value={seriesName}
+                                               style={{width: "70%"}} value={seriesName}
                                                onChange={(e) => {
                                                    this.setState({
                                                        seriesName: e.target.value
@@ -137,6 +133,32 @@ class info extends React.Component {
                                             }}/>
                                     </Col>
                                 </Row>
+                                {/*所属品牌*/}
+                                <Row style={{padding: "3%", paddingTop: 0}} type={"flex"} align={"middle"}>
+                                    <Col span={6} style={{textAlign: "right"}}>
+                                        所属品牌：
+                                    </Col>
+                                    <Col span={3}>
+                                        <Select notFoundContent={"没有匹配内容"} allowClear
+                                                dropdownMatchSelectWidth={false}
+                                                disabled={isLoading}
+                                                showSearch
+                                                style={{width: "100%", paddingRight: 5}}
+                                                placeholder="所属品牌"
+                                                optionFilterProp="children"
+                                                onChange={(e) => {
+                                                    this.setState({brandId: e});
+                                                }}
+                                                filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                                        >
+                                            {
+                                                brandList.map((item,index)=>(
+                                                    <Option value={item.brandId} key={item.brandId}>{item.brandName}</Option>
+                                                ))
+                                            }
+                                        </Select>
+                                    </Col>
+                                </Row>
                                 {/*系列图片*/}
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
                                     <Col span={6} style={{textAlign: "right"}}>
@@ -144,16 +166,18 @@ class info extends React.Component {
                                     </Col>
                                     <Col span={12}>
 
-                                        <Collapse bordered={false} >
-                                            <Panel header="选择系列图片" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
+                                        <Collapse bordered={false}>
+                                            <Panel header="选择系列图片" key="1"
+                                                   style={{background: '#f7f7f7', border: 0, overflow: 'hidden'}}>
                                                 <Upload
+                                                    headers={{Authorization: "bearer " + localStorage.getItem("RealFakeManagerJwt")}}
                                                     accept={"image/*"}
                                                     multiple
-                                                    action="/mock/upload"
+                                                    action="/api/v1/data/file"
                                                     listType="picture-card"
                                                     fileList={fileList}
                                                     onChange={({fileList}) => this.setState({
-                                                        types: fileList.reduce((list, next) => (list.concat("commodity")), []),
+                                                        types: fileList.reduce((list, next) => (list.concat("commodities")), []),
                                                         ids: fileList.reduce((list, next) => (list.concat("")), []),
                                                         pictures: fileList.reduce((list, next) => (list.concat(next.name)), []),
                                                         fileList
@@ -170,15 +194,19 @@ class info extends React.Component {
                                 </Row>
                                 {/*系列图片链接*/}
                                 {
-                                    pictures.length!==0?(
+                                    pictures.length !== 0 ? (
                                         <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
                                             <Col span={6} style={{textAlign: "right"}}>
                                                 系列图片链接：
                                             </Col>
                                             <Col span={12}>
 
-                                                <Collapse bordered={false} >
-                                                    <Panel header="设置图片跳转" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
+                                                <Collapse bordered={false}>
+                                                    <Panel header="设置图片跳转" key="1" style={{
+                                                        background: '#f7f7f7',
+                                                        border: 0,
+                                                        overflow: 'hidden'
+                                                    }}>
                                                         (按图片顺序)
                                                         {
                                                             pictures.map((item, index) => {
@@ -186,7 +214,7 @@ class info extends React.Component {
                                                                     <Row style={{padding: 5}}>
                                                                         <Col span={8}>
                                                                             <Select
-                                                                                value={types[index] === "" ? ("commodity") : (types[index])}
+                                                                                value={types[index] === "" ? ("commodities") : (types[index])}
                                                                                 notFoundContent={"没有匹配内容"} allowClear
                                                                                 dropdownMatchSelectWidth={false}
                                                                                 disabled={isLoading}
@@ -201,24 +229,26 @@ class info extends React.Component {
                                                                                 }}
                                                                                 filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                                                                             >
-                                                                                <Option value={"commodity"}
+                                                                                <Option value={"commodities"}
                                                                                         key={"commodity"}>跳转商品</Option>
-                                                                                <Option value={"brand"} key={"brand"}>跳转品牌</Option>
+                                                                                <Option value={"brands"} key={"brand"}>跳转品牌</Option>
                                                                                 <Option value={"series"} key={"series"}>跳转系列</Option>
-                                                                                <Option value={"unite"} key={"unite"}>跳转联名</Option>
+                                                                                <Option value={"unites"} key={"unite"}>跳转联名</Option>
                                                                             </Select>
                                                                         </Col>
                                                                         <Col span={8}>
                                                                             <Row type={"flex"} align={"middle"}>
-                                                                                <Col span={14} style={{textAlign: "right"}}>
+                                                                                <Col span={14}
+                                                                                     style={{textAlign: "right"}}>
                                                                                     跳转编号：
                                                                                 </Col>
                                                                                 <Col span={10}>
-                                                                                    <Input value={ids[index]} onChange={(e) => {
-                                                                                        let newIds = ids;
-                                                                                        newIds[index] = e.target.value;
-                                                                                        this.setState({ids: newIds});
-                                                                                    }}/>
+                                                                                    <Input value={ids[index]}
+                                                                                           onChange={(e) => {
+                                                                                               let newIds = ids;
+                                                                                               newIds[index] = e.target.value;
+                                                                                               this.setState({ids: newIds});
+                                                                                           }}/>
                                                                                 </Col>
                                                                             </Row>
                                                                         </Col>
@@ -231,7 +261,7 @@ class info extends React.Component {
                                                 </Collapse>
                                             </Col>
                                         </Row>
-                                    ):null
+                                    ) : null
                                 }
                                 {/*系列封面*/}
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
@@ -240,8 +270,9 @@ class info extends React.Component {
                                     </Col>
                                     <Col span={12}>
 
-                                        <Collapse bordered={false} >
-                                            <Panel header="选择品牌图片" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
+                                        <Collapse bordered={false}>
+                                            <Panel header="选择品牌图片" key="1"
+                                                   style={{background: '#f7f7f7', border: 0, overflow: 'hidden'}}>
 
                                                 <Row>
                                                     {
@@ -270,9 +301,10 @@ class info extends React.Component {
                                                                 return false;
                                                             }}
                                                         >
-                                                            {imageUrl ? <Avatar src={imageUrl} size={100} shape={"square"}/> : (
-                                                                null
-                                                            )}
+                                                            {imageUrl ?
+                                                                <Avatar src={imageUrl} size={100} shape={"square"}/> : (
+                                                                    null
+                                                                )}
                                                             <div>
                                                                 <Icon type={this.state.loading ? 'loading' : 'plus'}/>
                                                                 <div className="ant-upload-text">上传封面</div>
@@ -310,21 +342,24 @@ class info extends React.Component {
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
                                                     let idsFlag = false;
-                                                    for (let i=0;i<pictures.length;i++){
-                                                        if(ids[i]===""){
-                                                            idsFlag=true;
+                                                    for (let i = 0; i < pictures.length; i++) {
+                                                        if (ids[i] === "") {
+                                                            idsFlag = true;
                                                             break;
                                                         }
                                                     }
-                                                    if(seriesName===undefined||seriesName===""||
-                                                        describe===undefined||describe===""||
-                                                        cover===undefined||cover===""||
-                                                        pictures.length===0||
-                                                        types.length===0||
-                                                        ids.length===0||idsFlag){
+                                                    if (seriesName === undefined || seriesName === "" ||
+                                                        brandId === undefined || brandId === "" ||
+                                                        describe === undefined || describe === "" ||
+                                                        cover === undefined || cover === "" ||
+                                                        pictures.length === 0 ||
+                                                        types.length === 0 ||
+                                                        ids.length === 0 || idsFlag) {
                                                         message.error("信息输入不完整");
-                                                    }else{
+                                                    } else {
                                                         onAdd({
+                                                            brandId:brandId,
+                                                            manId:info.manId,
                                                             seriesName: seriesName,
                                                             describe: describe,
                                                             cover: cover,
@@ -332,9 +367,7 @@ class info extends React.Component {
                                                             types: types,
                                                             ids: ids,
                                                         });
-                                                        this.props.history.push("/commodity/series/");
                                                     }
-                                                    console.log(this.state);
 
                                                 }}
                                         >确认添加</Button>
@@ -361,10 +394,12 @@ class info extends React.Component {
 // props绑定state
 const mapStateToProps = (state) => {
     const series = state.commodity.series;
+    const brand = state.commodity.brand;
     const navLink = state.navLink;
     return {
         auth: navLink.auth,
         info: navLink.info,
+        brandList:brand.brandList,
         isLoading: series.isLoading
     }
 };
@@ -375,6 +410,9 @@ const mapDispatchToProps = (dispatch) => {
         onAdd: (seriesInfo) => {
             dispatch(Actions.Start());
             dispatch(Actions.Add(localStorage.getItem("RealFakeManagerJwt"), seriesInfo));
+        },
+        onFetchBrandList: () => {
+            dispatch(BrandActions.Fetching());
         },
     }
 };

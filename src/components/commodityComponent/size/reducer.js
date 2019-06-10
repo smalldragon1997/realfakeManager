@@ -3,7 +3,9 @@ import {message} from 'antd';
 
 const initState = {
     isLoading: false,   // 是否加载中
-    sizeId: undefined // auth
+    sizeId: undefined, // auth
+    sizeList:[],
+    sizeInfo:undefined,
 };
 
 //初始化status为载入状态
@@ -14,21 +16,48 @@ export default (state = initState, action) => {
             return {...state, isLoading: true}
         }
         case ActionTypes.Success: {
-            return {...state,  isLoading: false}
+            const data = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state, isLoading: false}
+            }else{
+                return {...state, sizeList:data.sizeList, isLoading: false}
+            }
+        }
+        case ActionTypes.FetchSizeInfoSuccess: {
+            const data = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state, isLoading: false}
+            }else{
+                return {...state, sizeInfo:data.sizeInfo, isLoading: false}
+            }
         }
         case ActionTypes.Edit: {
             return {...state, sizeId:action.sizeId, isLoading: false}
         }
         case ActionTypes.AddSuccess: {
-            message.success("添加尺码成功");
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("添加尺码成功");
+            }
             return {...state, isLoading: false}
         }
         case ActionTypes.UpdateSuccess: {
-            message.success("更新尺码信息成功");
-            return {...state,isLoading: false}
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("更新尺码信息成功");
+            }
+            return {...state, isLoading: false}
         }
         case ActionTypes.DeleteSuccess: {
-            message.success("删除成功");
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("删除尺码成功");
+            }
             return {...state, isLoading: false}
         }
         case ActionTypes.Failure: {

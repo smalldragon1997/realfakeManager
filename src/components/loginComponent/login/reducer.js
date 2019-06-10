@@ -16,20 +16,12 @@ export default (state = initState, action) => {
             return {...state,isLoading:false}
         }
         case ActionTypes.Success: {
-            if(!action.result.isLogin){
-                message.error("用户名或密码错误");
-                return {...state}
-            }else if(action.result.info.isForbidden){
-                message.error("该账号被禁用，请联系管理员");
-                return {...state}
+            if(action.result.status!=="200"){
+                return {...state,isLoading:false}
             }else{
                 message.success("登录成功，正在跳转");
+                return {...state,...action.result,isLoading:false}
             }
-            // 如果需要保存登录状态
-            localStorage.setItem("RealFakeManagerJwt", action.result.info.jwt);
-            console.log("已保存登录状态" + localStorage.getItem("RealFakeManagerJwt"));
-
-            return {...state,...action.result,isLoading:false}
         }
         case ActionTypes.Failure: {
             message.error(action.error);

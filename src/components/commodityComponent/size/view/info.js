@@ -30,12 +30,6 @@ import ShowImages from '../../../commom/showImages'
 const CheckboxGroup = Checkbox.Group;
 const {TextArea} = Input;
 
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
-
 class info extends React.Component {
 
     constructor(props) {
@@ -50,41 +44,9 @@ class info extends React.Component {
     }
 
     componentDidMount() {
-
-        //获取尺码信息
-        this.searchSize(this.props.sizeId);
-    }
-
-
-
-    // 搜索尺码
-    searchSize(sizeId) {
-        if (sizeId !== undefined) {
-            client.search({
-                index: 'size',
-                type: 'size',
-                body:{
-                    query:{
-                        bool:{
-                            must:{
-                                match:{sizeId:sizeId}
-                            }
-                        }
-                    }
-                }
-            }).then(
-                function (body) {
-                    console.log(body);
-                    this.setState({
-                        ...body.hits.hits[0]._source,
-                    });
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
+        if(this.props.sizeId!==undefined){
+            this.props.onFetchSizeInfo(this.props.sizeId);
         }
-
     }
 
     render() {
@@ -93,6 +55,8 @@ class info extends React.Component {
             isLoading, // 是否加载中
             onDelete,
             onUpdate,
+            sizeInfo,
+            info,
         } = this.props;
 
         const {
@@ -103,7 +67,7 @@ class info extends React.Component {
         return (
             <Spin spinning={isLoading}>
                 {
-                    sizeId === undefined ? (
+                    sizeInfo === undefined ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
@@ -115,7 +79,7 @@ class info extends React.Component {
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
-                                    <Divider>尺码信息(发布管理员:{manId})</Divider>
+                                    <Divider>尺码信息(发布管理员:{sizeInfo.managerInfo.nickname})</Divider>
                                 </Row>
                                 {/*尺码名*/}
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
@@ -123,7 +87,7 @@ class info extends React.Component {
                                         尺码名：
                                     </Col>
                                     <Col span={18}>
-                                        <Input style={{width: "70%"}} value={value}
+                                        <Input style={{width: "70%"}} value={value} placeholder={sizeInfo.value}
                                                onChange={(e) => {
                                                    this.setState({
                                                        value: e.target.value
@@ -137,15 +101,11 @@ class info extends React.Component {
                                          xxl={{span: 3, offset: 6}} style={{padding: "1%"}}>
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
-                                                    if(value===undefined||value===""){
-                                                        message.error("信息输入不完整");
-                                                    }else{
-                                                        onUpdate({
-                                                            value: value
-                                                        });
-                                                        this.props.history.push("/commodity/size/");
-                                                    }
-                                                    console.log(this.state);
+                                                    onUpdate({
+                                                        manId:info.manId,
+                                                        sizeId:sizeInfo.sizeId,
+                                                        value: value === undefined || value === "" ? sizeInfo.value : value,
+                                                    });
                                                 }}
                                         >修改</Button>
                                     </Col>
@@ -183,7 +143,10 @@ class info extends React.Component {
 // props绑定state
 const mapStateToProps = (state) => {
     const size = state.commodity.size;
+    const navLink = state.navLink;
     return {
+        info: navLink.info,
+        sizeInfo:size.sizeInfo,
         sizeId: size.sizeId,
         isLoading: size.isLoading
     }
@@ -200,6 +163,10 @@ const mapDispatchToProps = (dispatch) => {
         onUpdate: (sizeInfo) => {
             dispatch(Actions.Start());
             dispatch(Actions.Update(localStorage.getItem("RealFakeManagerJwt"), sizeInfo));
+        },
+        onFetchSizeInfo: (sizeId) => {
+            dispatch(Actions.Start());
+            dispatch(Actions.FetchSizeInfo(sizeId));
         },
     }
 };

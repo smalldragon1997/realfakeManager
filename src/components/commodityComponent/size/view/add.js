@@ -24,17 +24,6 @@ import {
 } from 'antd';
 
 const Option = Select.Option;
-import ShowImage from '../../../commom/showImage'
-import ShowImages from '../../../commom/showImages'
-
-const CheckboxGroup = Checkbox.Group;
-const {TextArea} = Input;
-
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
 
 class info extends React.Component {
 
@@ -67,7 +56,7 @@ class info extends React.Component {
             <Spin spinning={isLoading}>
                 {
                     //权限-超级管理员-编辑类目
-                    !(info.isSuper || auth.edi_category) ? (
+                    !(info !== undefined && info.isSuper || auth.edi_category) ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
@@ -88,7 +77,7 @@ class info extends React.Component {
                                     </Col>
                                     <Col span={18}>
                                         <Input placeholder={"输入尺码名"}
-                                            style={{width: "70%"}} value={value}
+                                               style={{width: "70%"}} value={value}
                                                onChange={(e) => {
                                                    this.setState({
                                                        value: e.target.value
@@ -102,13 +91,13 @@ class info extends React.Component {
                                          xxl={{span: 3, offset: 6}} style={{padding: "1%"}}>
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
-                                                    if(value===undefined||value===""){
+                                                    if (value === undefined || value === "") {
                                                         message.error("信息输入不完整");
-                                                    }else{
+                                                    } else {
                                                         onAdd({
+                                                            manId:info.manId,
                                                             value: value
                                                         });
-                                                        this.props.history.push("/commodity/size/");
                                                     }
                                                     console.log(this.state);
 

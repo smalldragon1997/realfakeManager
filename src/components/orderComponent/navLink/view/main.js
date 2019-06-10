@@ -70,12 +70,12 @@ class navLink extends React.Component {
                             <Menu.Item key="untreated" onClick={()=>{
                                 this.props.history.push("/order/afterSale");
                             }}>未处理</Menu.Item>
-                            <Menu.Item key="process" onClick={()=>{
-                                this.props.history.push("/order/afterSale/process");
-                            }}>处理中</Menu.Item>
-                            <Menu.Item key="afterSaledone" onClick={()=>{
-                                this.props.history.push("/order/afterSale/done");
-                            }}>处理完成</Menu.Item>
+                            {/*<Menu.Item key="process" onClick={()=>{*/}
+                                {/*this.props.history.push("/order/afterSale/process");*/}
+                            {/*}}>处理中</Menu.Item>*/}
+                            {/*<Menu.Item key="afterSaledone" onClick={()=>{*/}
+                                {/*this.props.history.push("/order/afterSale/done");*/}
+                            {/*}}>处理完成</Menu.Item>*/}
                         </SubMenu>
                     </Menu>
                 </div>

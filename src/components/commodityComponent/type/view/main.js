@@ -20,80 +20,19 @@ import {
     Popconfirm
 } from 'antd';
 import ShowImage from '../../../commom/showImage';
-import ShowImages from '../../../commom/showImages';
-
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
 
 class main extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = ({
-            // 搜索条件
-            key: "",
             // 列表复选
             selectedRowKeys: [],
-            //
-            typeList: [],
         });
     }
 
     componentDidMount() {
-
-        //获取类型信息
-        this.searchType(this.state.key);
-    }
-
-
-    // 搜索类型
-    searchType(key) {
-        if (key === "") {
-            client.search({
-                index: 'type',
-                type: 'type',
-                body: {
-                    query: {
-                        match_all: {}
-                    }
-                }
-            }).then(
-                function (body) {
-                    let value = body.hits.hits;
-                    this.setState({typeList: value.reduce((total, next) => (next._score === 0 ? (total) : (total.concat(next._source))), [])});
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
-        } else {
-            client.search({
-                index: 'type',
-                type: 'type',
-                body: {
-                    query: {
-                        bool: {
-                            should: [
-                                {match: {typeId: key}},
-                                {match: {typeName: key}},
-                            ],
-                        }
-                    }
-                }
-            }).then(
-                function (body) {
-                    let value = body.hits.hits;
-                    this.setState({typeList: value.reduce((total, next) => (next._score === 0 ? (total) : (total.concat(next._source))), [])});
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
-        }
-
+        this.props.onFetchTypeList();
     }
 
     render() {
@@ -103,12 +42,11 @@ class main extends React.Component {
             onEdit,
             onDelete,
             isLoading,
+            typeList,
         } = this.props;
 
         const {
             selectedRowKeys,
-            typeList,
-            key
         } = this.state;
 
         const columns = [
@@ -136,19 +74,7 @@ class main extends React.Component {
                 this.props.history.push("/commodity/type/info");
             }}>编辑</Tag>
                     <Popconfirm placement="top" title={"确定删除类型 " + typeInfo.typeName + " 吗？"} onConfirm={() => {
-                        let typeIdList = [];
-                        typeIdList.push(typeInfo.typeId);
-                        onDelete(typeIdList);
-                        let newTypeList = this.state.typeList;
-                        for (let i = 0; i < newTypeList.length; i++) {
-                            if (newTypeList[i].typeId === typeInfo.typeId) {
-                                newTypeList.remove(i);
-                                break;
-                            }
-                        }
-                        this.setState({
-                            typeList: newTypeList
-                        })
+                        onDelete(typeInfo.typeId);
                     }} okText="确认" cancelText="点错了">
                     <Tag color="red" key={typeInfo.typeId + "2"}>删除</Tag>
                     </Popconfirm>
@@ -184,70 +110,70 @@ class main extends React.Component {
                                             this.props.history.push("/commodity/type/add");
                                         }}> + 添加类型</Button>
                                     </Row>
-                                    {/*全选和搜索*/}
-                                    <Row type={"flex"} align={"middle"}
-                                         style={{padding: "3%", paddingTop: 0, paddingBottom: "1%"}}>
-                                        <Col span={10}>
-                                            <Popconfirm placement="top"
-                                                        title={"确定删除这" + selectedRowKeys.length + "个类型吗？"}
-                                                        onConfirm={() => {
-                                                            onDelete(selectedRowKeys);
-                                                            let newTypeList = this.state.typeList;
-                                                            for (let j = 0; j < selectedRowKeys.length; j++) {
-                                                                for (let i = 0; i < newTypeList.length; i++) {
-                                                                    if (newTypeList[i].typeId === selectedRowKeys[j]) {
-                                                                        newTypeList.remove(i);
-                                                                        break;
-                                                                    }
-                                                                }
-                                                            }
-                                                            this.setState({
-                                                                ...this.state,
-                                                                typeList: newTypeList,
-                                                                selectedRowKeys: []
-                                                            });
-                                                        }} okText="确认" cancelText="点错了">
-                                                <Button type={"danger"}
-                                                        loading={isLoading}
-                                                        disabled={!selectedRowKeys.length > 0}
-                                                >删除</Button>
-                                            </Popconfirm>
+                                    {/*/!*全选和搜索*!/*/}
+                                    {/*<Row type={"flex"} align={"middle"}*/}
+                                         {/*style={{padding: "3%", paddingTop: 0, paddingBottom: "1%"}}>*/}
+                                        {/*<Col span={10}>*/}
+                                            {/*<Popconfirm placement="top"*/}
+                                                        {/*title={"确定删除这" + selectedRowKeys.length + "个类型吗？"}*/}
+                                                        {/*onConfirm={() => {*/}
+                                                            {/*onDelete(selectedRowKeys);*/}
+                                                            {/*let newTypeList = this.state.typeList;*/}
+                                                            {/*for (let j = 0; j < selectedRowKeys.length; j++) {*/}
+                                                                {/*for (let i = 0; i < newTypeList.length; i++) {*/}
+                                                                    {/*if (newTypeList[i].typeId === selectedRowKeys[j]) {*/}
+                                                                        {/*newTypeList.remove(i);*/}
+                                                                        {/*break;*/}
+                                                                    {/*}*/}
+                                                                {/*}*/}
+                                                            {/*}*/}
+                                                            {/*this.setState({*/}
+                                                                {/*...this.state,*/}
+                                                                {/*typeList: newTypeList,*/}
+                                                                {/*selectedRowKeys: []*/}
+                                                            {/*});*/}
+                                                        {/*}} okText="确认" cancelText="点错了">*/}
+                                                {/*<Button type={"danger"}*/}
+                                                        {/*loading={isLoading}*/}
+                                                        {/*disabled={!selectedRowKeys.length > 0}*/}
+                                                {/*>删除</Button>*/}
+                                            {/*</Popconfirm>*/}
 
-                                        </Col>
-                                        <Col span={14} style={{textAlign: "right"}}>
-                                            <Row type={"flex"} align={"middle"}>
-                                                <Col span={12} style={{paddingRight:5}}>
-                                                    <Input
-                                                        value={key}
-                                                        style={{width: "100%"}} placeholder={"类型编号、名字"}
-                                                        onChange={(e) => {
-                                                            this.setState({
-                                                                ...this.state,
-                                                                key: e.target.value
-                                                            })
-                                                        }}/>
-                                                </Col>
-                                                <Col span={6} style={{paddingRight:5}}>
-                                                    <Button
-                                                        style={{width: "100%"}} type={"primary"} onClick={() => {
-                                                        if (key === "") {
-                                                            message.error("请输入关键字");
-                                                        } else {
-                                                            this.searchType(this.state.key);
-                                                        }
-                                                    }}>搜索</Button>
-                                                </Col>
-                                                <Col span={6}>
-                                                    <Button
-                                                        style={{width: "100%"}} onClick={() => {
-                                                        this.setState({key:""});
-                                                        this.searchType("")
-                                                    }}>重置</Button>
-                                                </Col>
+                                        {/*</Col>*/}
+                                        {/*<Col span={14} style={{textAlign: "right"}}>*/}
+                                            {/*<Row type={"flex"} align={"middle"}>*/}
+                                                {/*<Col span={12} style={{paddingRight:5}}>*/}
+                                                    {/*<Input*/}
+                                                        {/*value={key}*/}
+                                                        {/*style={{width: "100%"}} placeholder={"类型编号、名字"}*/}
+                                                        {/*onChange={(e) => {*/}
+                                                            {/*this.setState({*/}
+                                                                {/*...this.state,*/}
+                                                                {/*key: e.target.value*/}
+                                                            {/*})*/}
+                                                        {/*}}/>*/}
+                                                {/*</Col>*/}
+                                                {/*<Col span={6} style={{paddingRight:5}}>*/}
+                                                    {/*<Button*/}
+                                                        {/*style={{width: "100%"}} type={"primary"} onClick={() => {*/}
+                                                        {/*if (key === "") {*/}
+                                                            {/*message.error("请输入关键字");*/}
+                                                        {/*} else {*/}
+                                                            {/*this.searchType(this.state.key);*/}
+                                                        {/*}*/}
+                                                    {/*}}>搜索</Button>*/}
+                                                {/*</Col>*/}
+                                                {/*<Col span={6}>*/}
+                                                    {/*<Button*/}
+                                                        {/*style={{width: "100%"}} onClick={() => {*/}
+                                                        {/*this.setState({key:""});*/}
+                                                        {/*this.searchType("")*/}
+                                                    {/*}}>重置</Button>*/}
+                                                {/*</Col>*/}
 
-                                            </Row>
-                                        </Col>
-                                    </Row>
+                                            {/*</Row>*/}
+                                        {/*</Col>*/}
+                                    {/*</Row>*/}
                                     {/*表格数据*/}
                                     <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
                                         <Table
@@ -289,6 +215,7 @@ const mapStateToProps = (state) => {
     return {
         auth: navLink.auth,
         info: navLink.info,
+        typeList :type.typeList,
         isLoading: type.isLoading
     }
 };
@@ -302,6 +229,10 @@ const mapDispatchToProps = (dispatch) => {
         },
         onEdit: (typeId) => {
             dispatch(Actions.Edit(typeId));
+        },
+        onFetchTypeList: () => {
+            dispatch(Actions.Start());
+            dispatch(Actions.Fetching());
         }
     }
 };

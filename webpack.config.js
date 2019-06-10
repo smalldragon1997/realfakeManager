@@ -85,12 +85,15 @@ module.exports = {
         ]
     },
     devServer: { // webpack-dev-sever配置
-        port: 9000,
+        port: 9100,
         open: true,
         hot:true,
         proxy: {
             '/mock/*': {
                 target: 'http://localhost:3000'
+            },
+            '/api/v1/*': {
+                target: 'http://119.3.211.205:8080'
             }
         }
     },

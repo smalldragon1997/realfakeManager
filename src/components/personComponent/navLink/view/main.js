@@ -62,7 +62,15 @@ class navLink extends React.Component {
                             <Menu.Item key="comment" onClick={()=>{
                                 this.props.history.push("/person/comment");
                             }}>我回复的评论</Menu.Item>
+                            {
+                                info.isSuper?(
+                                    <Menu.Item key="comments" onClick={()=>{
+                                        this.props.history.push("/person/comment/all");
+                                    }}>全部评论</Menu.Item>
+                                ):null
+                            }
                         </SubMenu>
+
                     </Menu>
                 </div>
 

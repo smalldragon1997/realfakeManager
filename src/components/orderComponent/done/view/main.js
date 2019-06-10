@@ -46,14 +46,18 @@ class main extends React.Component {
         });
     }
 
+
     componentDidMount() {
-        // 通过令牌去获取管理员列表
-        const jwt = localStorage.getItem("RealFakeManagerJwt");
-        if (jwt !== undefined || jwt !== null) {
-            this.props.onFetchOrders(jwt);
+        if(this.props.info!==undefined){
+            this.props.onFetchOrders(this.props.info.manId,localStorage.getItem("RealFakeManagerJwt"));
         }
     }
 
+    componentWillReceiveProps(nextProps){
+        if(nextProps.info!==this.props.info&&nextProps.info!==undefined){
+            this.props.onFetchOrders(nextProps.info.manId,localStorage.getItem("RealFakeManagerJwt"));
+        }
+    }
     render() {
         const {
             auth,
@@ -65,7 +69,8 @@ class main extends React.Component {
             onFilter, // 过滤
             onReFilter, // 重置
             onDateFilter,
-            onReDateFilter
+            onReDateFilter,
+            onFetchOrderInfo,
         } = this.props;
 
         const {
@@ -78,20 +83,16 @@ class main extends React.Component {
 
         const columns = [
             {
+                title: '商品封面',
+                dataIndex: 'commOrderList',
+                key: 'commOrderList',
+                render: commOrderList => {
+                    return <ShowImages images={commOrderList.reduce((pics,next)=>(pics.concat(next.cover)),[])} size={50}/>
+                }
+            }, {
                 title: '订单号',
                 dataIndex: 'orderId',
                 key: 'orderId',
-            }, {
-                title: '商品封面',
-                dataIndex: 'commList',
-                key: 'commList',
-                render: commList => {
-                    let pictures = [];
-                    for(let i=0;i<commList.length;i++){
-                        pictures.push(commList[i].cover);
-                    }
-                    return <ShowImages images={pictures} size={50}/>
-                }
             }, {
                 title: '订单价格',
                 dataIndex: 'total',
@@ -110,14 +111,13 @@ class main extends React.Component {
                 key: 'actions',
                 render: (orderInfo) => (
                     <span>
+
                     <Tag color="blue" key={orderInfo.orderId + "2"} onClick={() => {
-                        onEditOrder(orderInfo);
+                        onFetchOrderInfo(orderInfo.orderId);
                         this.props.history.push("/order/done/info");
                     }}>详情</Tag>
-                    <Popconfirm placement="top" title={"确定删除此订单吗？"} onConfirm={() => {
-                        let orderIdList = [];
-                        orderIdList.push(orderInfo.orderId + "");
-                        onDeleteOrders(localStorage.getItem("RealFakeManagerJwt"), orderIdList);
+                    <Popconfirm placement="top" title={"确定删除此待发货订单吗？"} onConfirm={()=>{
+                        onDeleteOrders(orderInfo.orderId,info.manId);
                     }} okText="确认" cancelText="点错了">
                         <Tag color="red" key={orderInfo.orderId + "3"}>删除</Tag>
                     </Popconfirm>
@@ -133,8 +133,8 @@ class main extends React.Component {
                 key: orderList[i].orderId,
                 orderId: orderList[i].orderId,
                 address: orderList[i].address,
-                commList: orderList[i].commList,
-                name: orderList[i].express.name,
+                commOrderList: orderList[i].commOrderList,
+                // name: orderList[i].express.expName,
                 message: orderList[i].message,
                 number: orderList[i].number,
                 doneDate: new Date(orderList[i].doneDate).Format("yyyy-MM-dd hh:mm:ss"),
@@ -178,20 +178,20 @@ class main extends React.Component {
                                     </Row>
                                     <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingBottom: 10,paddingTop:10}}>
                                         <Col span={2}>
-                                            <Popconfirm placement="top"
-                                                        title={"确定删除这" + selectedRowKeys.length + "个未付款订单吗？"}
-                                                        onConfirm={() => {
-                                                            onDeleteOrders(localStorage.getItem("RealFakeManagerJwt"), selectedRowKeys);
-                                                            this.setState({
-                                                                ...this.state,
-                                                                selectedRowKeys: []
-                                                            });
-                                                        }} okText="确认" cancelText="点错了">
-                                                <Button type={"danger"}
-                                                        loading={isLoading}
-                                                        disabled={!selectedRowKeys.length > 0}
-                                                >删除</Button>
-                                            </Popconfirm>
+                                            {/*<Popconfirm placement="top"*/}
+                                                        {/*title={"确定删除这" + selectedRowKeys.length + "个未付款订单吗？"}*/}
+                                                        {/*onConfirm={() => {*/}
+                                                            {/*onDeleteOrders(localStorage.getItem("RealFakeManagerJwt"), selectedRowKeys);*/}
+                                                            {/*this.setState({*/}
+                                                                {/*...this.state,*/}
+                                                                {/*selectedRowKeys: []*/}
+                                                            {/*});*/}
+                                                        {/*}} okText="确认" cancelText="点错了">*/}
+                                                {/*<Button type={"danger"}*/}
+                                                        {/*loading={isLoading}*/}
+                                                        {/*disabled={!selectedRowKeys.length > 0}*/}
+                                                {/*>删除</Button>*/}
+                                            {/*</Popconfirm>*/}
 
 
                                         </Col>
@@ -244,19 +244,19 @@ class main extends React.Component {
                                     <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
                                         <Table
                                             defaultExpandAllRows
-                                            expandedRowRender={orderInfo =>
-                                                <span>
-                                                    <Row style={{marginLeft:"5%"}}>
-                                                        收货信息：{orderInfo.address.area + " " +
-                                                    orderInfo.address.detail + " " + orderInfo.address.name + " " + orderInfo.address.tel}
-                                                    </Row>
-                                                    <Row style={{marginLeft:"5%"}}>
-                                                        买家留言：{orderInfo.message}
-                                                    </Row>
-                                                    <Row style={{marginLeft:"5%"}}>
-                                                        物流公司：{orderInfo.name} 快递单号:{orderInfo.number}  发货时间：{orderInfo.deliverDate}
-                                                    </Row>
-                                                </span>}
+                                            // expandedRowRender={orderInfo =>
+                                            //     <span>
+                                            //         <Row style={{marginLeft:"5%"}}>
+                                            //             收货信息：{orderInfo.address.area + " " +
+                                            //         orderInfo.address.detail + " " + orderInfo.address.name + " " + orderInfo.address.tel}
+                                            //         </Row>
+                                            //         <Row style={{marginLeft:"5%"}}>
+                                            //             买家留言：{orderInfo.message}
+                                            //         </Row>
+                                            //         <Row style={{marginLeft:"5%"}}>
+                                            //             物流公司：{orderInfo.name} 快递单号:{orderInfo.number}  发货时间：{orderInfo.deliverDate}
+                                            //         </Row>
+                                            //     </span>}
                                             style={{width: "100%"}}
                                             rowSelection={{
                                                 selectedRowKeys,
@@ -283,11 +283,10 @@ class main extends React.Component {
 const mapStateToProps = (state) => {
     const done = state.order.done;
     const navLink = state.navLink;
-
     return {
         auth: navLink.auth,
         info: navLink.info,
-        orderList: getOrderListByFilter(done.orderList, done.filter, done.key,done.start,done.end,new Date()),
+        orderList: done.orderList,
         isLoading: done.isLoading
     }
 };
@@ -311,17 +310,22 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(Actions.Start());
             dispatch(Actions.ReDateFilter());
         },
-        onFetchOrders: (jwt) => {
+        onFetchOrderInfo: (orderId) => {
             dispatch(Actions.Start());
-            dispatch(Actions.Fetching(jwt));
+            dispatch(Actions.FetchOrderInfo(orderId,localStorage.getItem("RealFakeManagerJwt")));
+        },
+        onFetchOrders: (manId) => {
+            dispatch(Actions.Start());
+            dispatch(Actions.Fetching(manId,localStorage.getItem("RealFakeManagerJwt")));
         },
         onEditOrder: (orderInfo) => {
             dispatch(Actions.Start());
             dispatch(Actions.Edit(orderInfo));
         },
-        onDeleteOrders: (jwt, orderIdList) => {
+        onDeleteOrders: (orderId,manId) => {
             dispatch(Actions.Start());
-            dispatch(Actions.DeleteOrders(jwt, orderIdList));
+            dispatch(Actions.DeleteOrders(localStorage.getItem("RealFakeManagerJwt"),orderId));
+            setTimeout(()=>dispatch(Actions.Fetching(manId,localStorage.getItem("RealFakeManagerJwt"))),2000)
         },
     }
 };

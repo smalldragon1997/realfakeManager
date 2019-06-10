@@ -31,11 +31,6 @@ const CheckboxGroup = Checkbox.Group;
 const {TextArea} = Input;
 
 const Panel = Collapse.Panel;
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
 
 class info extends React.Component {
 
@@ -47,14 +42,11 @@ class info extends React.Component {
             brandName: undefined,
             describe: undefined,
             cover: undefined,
-            manId: undefined,
             sizeTable: undefined,
             pictures: [],
             types: [],
             ids: [],
 
-
-            oldPictures: [],
             fileList: [],
             imageUrl: undefined,
             sizeImageUrl: undefined,
@@ -62,9 +54,9 @@ class info extends React.Component {
     }
 
     componentDidMount() {
-
-        //获取品牌信息
-        this.searchBrand(this.props.brandId);
+        if(this.props.brandId!==undefined){
+            this.props.onFetchBrandInfo(this.props.brandId);
+        }
     }
 
     _cropCover() {
@@ -81,27 +73,6 @@ class info extends React.Component {
         });
     }
 
-    // 搜索品牌
-    searchBrand(brandId) {
-        if (brandId !== undefined) {
-            client.get({
-                index: 'brand',
-                type: 'brand',
-                id: brandId
-            }).then(
-                function (body) {
-                    this.setState({
-                        ...body._source,
-                        oldPictures: body._source.pictures
-                    });
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
-        }
-
-    }
 
     render() {
         const {
@@ -109,18 +80,18 @@ class info extends React.Component {
             isLoading, // 是否加载中
             onDelete,
             onUpdate,
+            brandInfo,
+            info
         } = this.props;
 
         const {
             brandName,
             describe,
             cover,
-            manId,
             sizeTable,
             pictures,
             types,
             ids,
-            oldPictures,
             fileList,
             imageUrl,
             sizeImageUrl,
@@ -129,7 +100,7 @@ class info extends React.Component {
         return (
             <Spin spinning={isLoading}>
                 {
-                    brandId === undefined ? (
+                    brandInfo === undefined ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
@@ -141,7 +112,7 @@ class info extends React.Component {
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
-                                    <Divider>品牌信息(发布管理员:{manId})</Divider>
+                                    <Divider>品牌信息(发布管理员:{brandInfo.managerInfo.nickname})</Divider>
                                 </Row>
                                 {/*品牌名*/}
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
@@ -149,7 +120,7 @@ class info extends React.Component {
                                         品牌名：
                                     </Col>
                                     <Col span={18}>
-                                        <Input style={{width: "70%"}} value={brandName}
+                                        <Input style={{width: "70%"}} value={brandName} placeholder={brandInfo.brandName}
                                                onChange={(e) => {
                                                    this.setState({
                                                        brandName: e.target.value
@@ -165,7 +136,7 @@ class info extends React.Component {
                                     <Col span={18}>
                                         <TextArea
                                             rows={5}
-                                            style={{width: "70%"}} value={describe}
+                                            style={{width: "70%"}} value={describe} placeholder={brandInfo.describe}
                                             onChange={(e) => {
                                                 this.setState({
                                                     describe: e.target.value
@@ -182,16 +153,17 @@ class info extends React.Component {
 
                                         <Collapse bordered={false} defaultActiveKey={['1']}>
                                             <Panel header="选择品牌图片" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
-                                                <ShowImages images={oldPictures} size={70}/><br/>
+                                                <ShowImages images={brandInfo.brandPicList.reduce((list,next)=>(list.concat(next.url)),[])} size={70}/><br/>
                                                 (此操作将删除历史图片)<br/>
                                                 <Upload
+                                                    headers={{Authorization: "bearer " + localStorage.getItem("RealFakeManagerJwt")}}
                                                     accept={"image/*"}
                                                     multiple
-                                                    action="/mock/upload"
+                                                    action="/api/v1/data/file"
                                                     listType="picture-card"
                                                     fileList={fileList}
                                                     onChange={({fileList}) => this.setState({
-                                                        types: fileList.reduce((list, next) => (list.concat("commodity")), []),
+                                                        types: fileList.reduce((list, next) => (list.concat("commodities")), []),
                                                         ids: fileList.reduce((list, next) => (list.concat("")), []),
                                                         pictures: fileList.reduce((list, next) => (list.concat(next.name)), []),
                                                         fileList
@@ -218,12 +190,13 @@ class info extends React.Component {
                                             <Panel header="设置图片跳转" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
                                                 (按图片顺序)
                                                 {
+                                                    pictures.length===0?"请上传品牌图片后设置图片跳转":
                                                     pictures.map((item, index) => {
                                                         return (
                                                             <Row style={{padding: 5}}>
                                                                 <Col span={8}>
                                                                     <Select
-                                                                        value={types[index] === "" ? ("commodity") : (types[index])}
+                                                                        value={types[index] === "" ? ("commodities") : (types[index])}
                                                                         notFoundContent={"没有匹配内容"} allowClear
                                                                         dropdownMatchSelectWidth={false}
                                                                         disabled={isLoading}
@@ -238,11 +211,11 @@ class info extends React.Component {
                                                                         }}
                                                                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                                                                     >
-                                                                        <Option value={"commodity"}
+                                                                        <Option value={"commodities"}
                                                                                 key={"commodity"}>跳转商品</Option>
-                                                                        <Option value={"brand"} key={"brand"}>跳转品牌</Option>
+                                                                        <Option value={"brands"} key={"brand"}>跳转品牌</Option>
                                                                         <Option value={"series"} key={"series"}>跳转系列</Option>
-                                                                        <Option value={"unite"} key={"unite"}>跳转联名</Option>
+                                                                        <Option value={"unites"} key={"unite"}>跳转联名</Option>
                                                                     </Select>
                                                                 </Col>
                                                                 <Col span={8}>
@@ -259,14 +232,17 @@ class info extends React.Component {
                                                                         </Col>
                                                                     </Row>
                                                                 </Col>
-
                                                             </Row>
                                                         )
                                                     })
                                                 }
                                             </Panel>
                                         </Collapse>
-
+                                        当前图片跳转(按顺序)<br/>{
+                                            brandInfo.brandPicList.map((item,index)=>(
+                                                <Row>{"跳转："+item.type+" 编号："+item.id}</Row>
+                                            ))
+                                        }
                                     </Col>
                                 </Row>
                                 {/*品牌封面*/}
@@ -281,7 +257,11 @@ class info extends React.Component {
 
                                                 <Row>
                                                     {
-                                                        cover === undefined ? null : (
+                                                        cover === undefined ? (
+                                                            <Col span={10}>
+                                                                <Avatar src={brandInfo.cover} size={160} shape={"square"}/>
+                                                            </Col>
+                                                        ) : (
                                                             <Col span={10}>
                                                                 <Avatar src={cover} size={160} shape={"square"}/>
                                                             </Col>
@@ -351,7 +331,10 @@ class info extends React.Component {
 
                                                 <Row>
                                                     {
-                                                        sizeTable === undefined ? null : (
+                                                        sizeTable === undefined ? (
+                                                            <Col span={10}>
+                                                                <Avatar src={brandInfo.sizeTable} size={160} shape={"square"}/>
+                                                            </Col>) : (
                                                             <Col span={10}>
                                                                 <Avatar src={sizeTable} size={160} shape={"square"}/>
                                                             </Col>
@@ -391,7 +374,7 @@ class info extends React.Component {
                                                     <Col span={16}>
                                                         {
                                                             sizeImageUrl === undefined ? (
-                                                                "请先上传封面图片"
+                                                                "请先上传尺码表图片"
                                                             ) : (
                                                                 <Cropper
                                                                     ref='cropperSizeTable'
@@ -416,40 +399,23 @@ class info extends React.Component {
                                          xxl={{span: 3, offset: 6}} style={{padding: "1%"}}>
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
-                                                    let idsFlag = false;
-                                                    for (let i=0;i<pictures.length;i++){
-                                                        if(ids[i]===""){
-                                                            idsFlag=true;
-                                                            break;
-                                                        }
-                                                    }
-                                                    if(brandName===undefined||brandName===""||
-                                                        describe===undefined||describe===""||
-                                                        cover===undefined||cover===""||
-                                                        sizeTable===undefined||sizeTable===""||
-                                                        pictures.length===0||
-                                                        types.length===0||
-                                                        ids.length===0||idsFlag){
-                                                        message.error("信息输入不完整");
-                                                    }else{
-                                                        onUpdate({
-                                                            brandName: brandName,
-                                                            describe: describe,
-                                                            cover: cover,
-                                                            sizeTable: sizeTable,
-                                                            pictures: pictures,
-                                                            types: types,
-                                                            ids: ids,
-                                                        });
-                                                        this.props.history.push("/commodity/brand/");
-                                                    }
-                                                    console.log(this.state);
+                                                    onUpdate({
+                                                        manId:info.manId,
+                                                        brandId:brandInfo.brandId,
+                                                        brandName: brandName===undefined||brandName===""?brandInfo.brandName:brandName,
+                                                        describe: describe===undefined||describe===""?brandInfo.describe:describe,
+                                                        cover: cover===undefined||cover===""?brandInfo.cover:cover,
+                                                        sizeTable: sizeTable===undefined||sizeTable===""?brandInfo.sizeTable:sizeTable,
+                                                        pictures: pictures,
+                                                        types: types,
+                                                        ids: ids,
+                                                    });
                                                 }}
                                         >修改</Button>
                                     </Col>
                                     <Col xs={24} sm={24} md={24} lg={24} xl={3} xxl={3} style={{padding: "1%"}}>
 
-                                        <Popconfirm placement="top" title={"确定删除品牌 " + brandName + " 吗？"}
+                                        <Popconfirm placement="top" title={"确定删除品牌 " + brandInfo.brandName + " 吗？"}
                                                     onConfirm={() => {
                                                         onDelete(brandId);
                                                         this.props.history.push("/commodity/brand/");
@@ -481,8 +447,11 @@ class info extends React.Component {
 // props绑定state
 const mapStateToProps = (state) => {
     const brand = state.commodity.brand;
+    const navLink = state.navLink;
     return {
+        info: navLink.info,
         brandId: brand.brandId,
+        brandInfo: brand.brandInfo,
         isLoading: brand.isLoading
     }
 };
@@ -496,8 +465,13 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(Actions.DeleteBrand(brandIdList.push(brandId), localStorage.getItem("RealFakeManagerJwt")));
         },
         onUpdate: (brandInfo) => {
+            message.loading("正在更新品牌信息...请稍后刷新");
             dispatch(Actions.Start());
             dispatch(Actions.UpdateBrand(localStorage.getItem("RealFakeManagerJwt"), brandInfo));
+        },
+        onFetchBrandInfo: (commId) => {
+            dispatch(Actions.Start());
+            dispatch(Actions.FetchBrandInfo(commId));
         },
     }
 };

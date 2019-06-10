@@ -20,80 +20,19 @@ import {
     Popconfirm
 } from 'antd';
 import ShowImage from '../../../commom/showImage';
-import ShowImages from '../../../commom/showImages';
-
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
 
 class main extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = ({
-            // 搜索条件
-            key: "",
             // 列表复选
             selectedRowKeys: [],
-            //
-            disList: [],
         });
     }
 
     componentDidMount() {
-
-        //获取代金卷信息
-        this.searchDiscount(this.state.key);
-    }
-
-
-    // 搜索代金卷
-    searchDiscount(key) {
-        if (key === "") {
-            client.search({
-                index: 'discount',
-                type: 'discount',
-                body: {
-                    query: {
-                        match_all: {}
-                    }
-                }
-            }).then(
-                function (body) {
-                    let value = body.hits.hits;
-                    this.setState({disList: value.reduce((total, next) => (next._score === 0 ? (total) : (total.concat(next._source))), [])});
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
-        } else {
-            client.search({
-                index: 'discount',
-                type: 'discount',
-                body: {
-                    query: {
-                        bool: {
-                            should: [
-                                {match: {disId: key}},
-                                {match: {disName: key}},
-                            ],
-                        }
-                    }
-                }
-            }).then(
-                function (body) {
-                    let value = body.hits.hits;
-                    this.setState({disList: value.reduce((total, next) => (next._score === 0 ? (total) : (total.concat(next._source))), [])});
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
-        }
-
+        this.props.onFetchDiscountList();
     }
 
     render() {
@@ -103,12 +42,11 @@ class main extends React.Component {
             onEdit,
             onDelete,
             isLoading,
+            discountList,
         } = this.props;
 
         const {
             selectedRowKeys,
-            disList,
-            key
         } = this.state;
 
         const columns = [
@@ -140,19 +78,7 @@ class main extends React.Component {
                 this.props.history.push("/commodity/discount/info");
             }}>编辑</Tag>
                     <Popconfirm placement="top" title={"确定删除代金卷 " + disInfo.disName + " 吗？"} onConfirm={() => {
-                        let disIdList = [];
-                        disIdList.push(disInfo.disId);
-                        onDelete(disIdList);
-                        let newDisList = this.state.disList;
-                        for (let i = 0; i < newDisList.length; i++) {
-                            if (newDisList[i].disId === disInfo.disId) {
-                                newDisList.remove(i);
-                                break;
-                            }
-                        }
-                        this.setState({
-                            disList: newDisList
-                        })
+                        onDelete(disInfo.disId);
                     }} okText="确认" cancelText="点错了">
                     <Tag color="red" key={disInfo.disId + "2"}>删除</Tag>
                     </Popconfirm>
@@ -162,14 +88,14 @@ class main extends React.Component {
 
         // 多选列表
         let options = [];
-        for (let i = 0; i < disList.length; i++) {
+        for (let i = 0; i < discountList.length; i++) {
             options.push({
-                key: disList[i].disId,
-                disId: disList[i].disId,
-                cover: disList[i].cover,
-                price: disList[i].price,
-                disName: disList[i].disName,
-                actions: disList[i],
+                key: discountList[i].disId,
+                disId: discountList[i].disId,
+                cover: discountList[i].cover,
+                price: discountList[i].price,
+                disName: discountList[i].disName,
+                actions: discountList[i],
             })
         }
         return (
@@ -188,70 +114,70 @@ class main extends React.Component {
                                             this.props.history.push("/commodity/discount/add");
                                         }}> + 添加代金卷</Button>
                                     </Row>
-                                    {/*全选和搜索*/}
-                                    <Row type={"flex"} align={"middle"}
-                                         style={{padding: "3%", paddingTop: 0, paddingBottom: "1%"}}>
-                                        <Col span={10}>
-                                            <Popconfirm placement="top"
-                                                        title={"确定删除这" + selectedRowKeys.length + "个代金卷吗？"}
-                                                        onConfirm={() => {
-                                                            onDelete(selectedRowKeys);
-                                                            let newDisList = this.state.disList;
-                                                            for (let j = 0; j < selectedRowKeys.length; j++) {
-                                                                for (let i = 0; i < newDisList.length; i++) {
-                                                                    if (newDisList[i].disId === selectedRowKeys[j]) {
-                                                                        newDisList.remove(i);
-                                                                        break;
-                                                                    }
-                                                                }
-                                                            }
-                                                            this.setState({
-                                                                ...this.state,
-                                                                disList: newDisList,
-                                                                selectedRowKeys: []
-                                                            });
-                                                        }} okText="确认" cancelText="点错了">
-                                                <Button type={"danger"}
-                                                        loading={isLoading}
-                                                        disabled={!selectedRowKeys.length > 0}
-                                                >删除</Button>
-                                            </Popconfirm>
+                                    {/*/!*全选和搜索*!/*/}
+                                    {/*<Row type={"flex"} align={"middle"}*/}
+                                         {/*style={{padding: "3%", paddingTop: 0, paddingBottom: "1%"}}>*/}
+                                        {/*<Col span={10}>*/}
+                                            {/*<Popconfirm placement="top"*/}
+                                                        {/*title={"确定删除这" + selectedRowKeys.length + "个代金卷吗？"}*/}
+                                                        {/*onConfirm={() => {*/}
+                                                            {/*onDelete(selectedRowKeys);*/}
+                                                            {/*let newDisList = this.state.disList;*/}
+                                                            {/*for (let j = 0; j < selectedRowKeys.length; j++) {*/}
+                                                                {/*for (let i = 0; i < newDisList.length; i++) {*/}
+                                                                    {/*if (newDisList[i].disId === selectedRowKeys[j]) {*/}
+                                                                        {/*newDisList.remove(i);*/}
+                                                                        {/*break;*/}
+                                                                    {/*}*/}
+                                                                {/*}*/}
+                                                            {/*}*/}
+                                                            {/*this.setState({*/}
+                                                                {/*...this.state,*/}
+                                                                {/*disList: newDisList,*/}
+                                                                {/*selectedRowKeys: []*/}
+                                                            {/*});*/}
+                                                        {/*}} okText="确认" cancelText="点错了">*/}
+                                                {/*<Button type={"danger"}*/}
+                                                        {/*loading={isLoading}*/}
+                                                        {/*disabled={!selectedRowKeys.length > 0}*/}
+                                                {/*>删除</Button>*/}
+                                            {/*</Popconfirm>*/}
 
-                                        </Col>
-                                        <Col span={14} style={{textAlign: "right"}}>
-                                            <Row type={"flex"} align={"middle"}>
-                                                <Col span={12} style={{paddingRight:5}}>
-                                                    <Input
-                                                        value={key}
-                                                        style={{width: "100%"}} placeholder={"代金卷编号、名字"}
-                                                        onChange={(e) => {
-                                                            this.setState({
-                                                                ...this.state,
-                                                                key: e.target.value
-                                                            })
-                                                        }}/>
-                                                </Col>
-                                                <Col span={6} style={{paddingRight:5}}>
-                                                    <Button
-                                                        style={{width: "100%"}} type={"primary"} onClick={() => {
-                                                        if (key === "") {
-                                                            message.error("请输入关键字");
-                                                        } else {
-                                                            this.searchBrand(this.state.key);
-                                                        }
-                                                    }}>搜索</Button>
-                                                </Col>
-                                                <Col span={6}>
-                                                    <Button
-                                                        style={{width: "100%"}} onClick={() => {
-                                                        this.setState({key:""});
-                                                        this.searchDiscount("")
-                                                    }}>重置</Button>
-                                                </Col>
+                                        {/*</Col>*/}
+                                        {/*<Col span={14} style={{textAlign: "right"}}>*/}
+                                            {/*<Row type={"flex"} align={"middle"}>*/}
+                                                {/*<Col span={12} style={{paddingRight:5}}>*/}
+                                                    {/*<Input*/}
+                                                        {/*value={key}*/}
+                                                        {/*style={{width: "100%"}} placeholder={"代金卷编号、名字"}*/}
+                                                        {/*onChange={(e) => {*/}
+                                                            {/*this.setState({*/}
+                                                                {/*...this.state,*/}
+                                                                {/*key: e.target.value*/}
+                                                            {/*})*/}
+                                                        {/*}}/>*/}
+                                                {/*</Col>*/}
+                                                {/*<Col span={6} style={{paddingRight:5}}>*/}
+                                                    {/*<Button*/}
+                                                        {/*style={{width: "100%"}} type={"primary"} onClick={() => {*/}
+                                                        {/*if (key === "") {*/}
+                                                            {/*message.error("请输入关键字");*/}
+                                                        {/*} else {*/}
+                                                            {/*this.searchBrand(this.state.key);*/}
+                                                        {/*}*/}
+                                                    {/*}}>搜索</Button>*/}
+                                                {/*</Col>*/}
+                                                {/*<Col span={6}>*/}
+                                                    {/*<Button*/}
+                                                        {/*style={{width: "100%"}} onClick={() => {*/}
+                                                        {/*this.setState({key:""});*/}
+                                                        {/*this.searchDiscount("")*/}
+                                                    {/*}}>重置</Button>*/}
+                                                {/*</Col>*/}
 
-                                            </Row>
-                                        </Col>
-                                    </Row>
+                                            {/*</Row>*/}
+                                        {/*</Col>*/}
+                                    {/*</Row>*/}
                                     {/*表格数据*/}
                                     <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
                                         <Table
@@ -285,6 +211,7 @@ const mapStateToProps = (state) => {
     return {
         auth: navLink.auth,
         info: navLink.info,
+        discountList:discount.discountList,
         isLoading: discount.isLoading
     }
 };
@@ -292,12 +219,16 @@ const mapStateToProps = (state) => {
 // props绑定dispatch
 const mapDispatchToProps = (dispatch) => {
     return {
-        onDelete: (disIdList) => {
+        onDelete: (disId) => {
             dispatch(Actions.Start());
-            dispatch(Actions.Delete(disIdList, localStorage.getItem("RealFakeManagerJwt")));
+            dispatch(Actions.Delete(disId, localStorage.getItem("RealFakeManagerJwt")));
         },
         onEdit: (disId) => {
             dispatch(Actions.Edit(disId));
+        },
+        onFetchDiscountList: () => {
+            dispatch(Actions.Start());
+            dispatch(Actions.Fetching());
         }
     }
 };

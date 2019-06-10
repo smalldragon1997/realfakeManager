@@ -23,3 +23,6 @@ export const Add = 'series/Add';
 export const AddSuccess = 'series/AddSuccess';
 
 export const Edit = 'series/Edit';
+
+export const FetchSeriesInfo = 'series/FetchSeriesInfo';
+export const FetchSeriesInfoSuccess = 'series/FetchSeriesInfoSuccess';

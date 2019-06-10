@@ -14,9 +14,18 @@ export const Failure = (error) => ({
     error
 });
 
-export const Fetching = (jwt) => ({
-    type : ActionType.Fetching,
+export const Fetching = (manId,jwt) => ({
+    type : ActionType.Fetching,manId,
     jwt
+});
+
+export const FetchOrderInfo = (orderId,jwt) => ({
+    type : ActionType.FetchOrderInfo,orderId,
+    jwt
+});
+
+export const FetchOrderInfoSuccess = (result) => ({
+    type : ActionType.FetchOrderInfoSuccess,result
 });
 
 
@@ -25,20 +34,19 @@ export const UpdatePrice = (jwt,orderId,price) => ({
     jwt,orderId,price
 });
 
-export const UpdatePriceSuccess = (orderId,price) => ({
-    type : ActionType.UpdatePriceSuccess,
-    orderId,price
+export const UpdatePriceSuccess = (result) => ({
+    type : ActionType.UpdatePriceSuccess,result
 });
 
 
-export const DeletePays = (jwt,orderIdList) => ({
+export const DeletePays = (jwt,orderId) => ({
     type : ActionType.DeletePays,
-    jwt,orderIdList
+    jwt,orderId
 });
 
-export const DeletePaysSuccess = (orderIdList) => ({
+export const DeletePaysSuccess = (result) => ({
     type : ActionType.DeletePaysSuccess,
-    orderIdList
+    result
 });
 
 export const EditPay = (payInfo) => ({

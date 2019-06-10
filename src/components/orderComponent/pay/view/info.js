@@ -22,6 +22,7 @@ import {
     Tag,
     Divider,Popconfirm,Modal
 } from 'antd';
+import payCard from "../../../allComponent/all/view/card/payCard";
 
 const CheckboxGroup = Checkbox.Group;
 
@@ -68,12 +69,12 @@ class info extends React.Component {
                     return <span>{text}</span>;
                 },
             }, {
-                title: '商品图片',
-                dataIndex: 'icon',
-                key: 'icon',
-                render: (icon, row, index) => {
-                    if (index < payInfo.commList.length) {
-                        return <ShowImage image={icon} size={70}/>;
+                title: '商品封面',
+                dataIndex: 'cover',
+                key: 'cover',
+                render: (cover, row, index) => {
+                    if (index < payInfo.commOrderList.length) {
+                        return <ShowImage image={cover} size={70}/>;
                     }
                     return {
                         children: "",
@@ -84,7 +85,7 @@ class info extends React.Component {
                 dataIndex: 'title',
                 key: 'title',
                 render: (commodity, row, index) => {
-                    if (index < payInfo.commList.length) {
+                    if (index < payInfo.commOrderList.length) {
                         return <a onClick={()=>{
                             onEditComm(commodity.commId);
                             this.props.history.push("/commodity/all/info");
@@ -99,7 +100,7 @@ class info extends React.Component {
                 dataIndex: 'qualName',
                 key: 'qualName',
                 render: (qualName, row, index) => {
-                    if (index < payInfo.commList.length) {
+                    if (index < payInfo.commOrderList.length) {
                         return qualName;
                     }
                     return {
@@ -111,7 +112,7 @@ class info extends React.Component {
                 dataIndex: 'size',
                 key: 'size',
                 render: (size, row, index) => {
-                    if (index < payInfo.commList.length) {
+                    if (index < payInfo.commOrderList.length) {
                         return size;
                     }
                     return {
@@ -130,16 +131,16 @@ class info extends React.Component {
         // 表格数据
         let options = [];
         if(payInfo!==undefined){
-            const commList = payInfo.commList;
-            for (let i = 0; i < commList.length; i++) {
+            const commOrderList = payInfo.commOrderList;
+            for (let i = 0; i < commOrderList.length; i++) {
                 options.push({
-                    key: commList[i].commId,
-                    commId: commList[i].commId,
-                    icon: commList[i].icon,
-                    title: commList[i],
-                    qualName: commList[i].qualName,
-                    size: commList[i].size,
-                    price: "￥"+commList[i].price,
+                    key: commOrderList[i].commodity.commId,
+                    commId: commOrderList[i].commodity.commId,
+                    cover: commOrderList[i].cover,
+                    title: commOrderList[i],
+                    qualName: commOrderList[i].qualName,
+                    size: commOrderList[i].size,
+                    price: "￥"+commOrderList[i].price,
                 })
             }
             if(payInfo.express!==undefined){
@@ -149,7 +150,7 @@ class info extends React.Component {
                     icon: "",
                     title: "",
                     qualName: "",
-                    size: payInfo.express.name,
+                    size: payInfo.express.expName,
                     price: "￥"+payInfo.express.price,
                 })
             }
@@ -160,13 +161,14 @@ class info extends React.Component {
                     icon: "",
                     title: "",
                     qualName: "",
-                    size: payInfo.discount.name,
-                    price: "￥"+payInfo.discount.price,
+                    size: payInfo.discount===null?null:payInfo.discount.disName,
+                    price: payInfo.discount===null?"无代金卷":"￥"+payInfo.discount.price,
                 })
             }
-            const express = payInfo.express.price===undefined?(0):(payInfo.express.price);
-            const discount = payInfo.discount.price===undefined?(0):(payInfo.discount.price);
-            const total = payInfo.commList.reduce((total,next)=>(total+next.price),0)+express-discount;
+            // const express = payInfo.express.price===undefined?(0):(payInfo.express.price);
+            // const discount = payInfo.discount.price===undefined?(0):(payInfo.discount.price);
+            // const total = payInfo.commList.reduce((total,next)=>(total+next.price),0)+express-discount;
+            const total = payInfo.total;
             options.push({
                 key: -3,
                 commId: "总计",
@@ -202,9 +204,7 @@ class info extends React.Component {
                                     </Col>
                                     <Col span={6} style={{textAlign:"right"}}>
                                         <Popconfirm placement="top" title={"确定删除此未付款订单吗？"} onConfirm={()=>{
-                                            let orderIdList = [];
-                                            orderIdList.push(payInfo.orderId+"");
-                                            onDeletePays(localStorage.getItem("RealFakeManagerJwt"),orderIdList);
+                                            onDeletePays(payInfo.orderId,info.manId);
                                             this.props.history.push("/order/pay");
                                         }} okText="确认" cancelText="点错了">
                                             <Button type={"danger"}>删除订单</Button>
@@ -221,7 +221,7 @@ class info extends React.Component {
                                                 if(price<=0||price===undefined){
                                                     message.error("价格不能为空或小于0")
                                                 }else{
-                                                    onUpdatePrice(localStorage.getItem("RealFakeManagerJwt"),theOrderId,price);
+                                                    onUpdatePrice(localStorage.getItem("RealFakeManagerJwt"),payInfo.orderId,price,info.manId);
                                                     this.setState({visible:false,price:undefined,theOrderId:undefined})
                                                 }
                                             }}
@@ -236,7 +236,7 @@ class info extends React.Component {
                                     </Col>
                                 </Row>
                                 <Row type={"flex"}  justify={"space-around"} style={{padding: "3%", paddingTop: 0,paddingBottom:0}}>
-                                    <Col span={8}>
+                                    <Col span={10}>
                                         <Row style={{padding:"2%",paddingLeft:"8%"}}>用户名:<a onClick={()=>{
                                             onEditUser(payInfo.userInfo.userId);
                                             this.props.history.push("/user/all/info");
@@ -244,11 +244,11 @@ class info extends React.Component {
                                         <Row  style={{padding:"2%",paddingLeft:"8%"}}>用户编号:{payInfo.userInfo.userId}</Row>
                                         <Row  style={{padding:"2%",paddingLeft:"8%"}}>交易编号:{payInfo.payId}</Row>
                                     </Col>
-                                    <Col span={8}>
+                                    <Col span={7}>
                                         <Row style={{padding:"2%"}}>创建时间:{new Date(payInfo.date).Format("yyyy-MM-dd hh:mm:ss")}</Row>
-                                        <Row style={{padding:"2%"}}>有效时间:{new Date(payInfo.date+24*60*60*1000).Format("yyyy-MM-dd hh:mm:ss")}</Row>
+                                        <Row style={{padding:"2%"}}>有效时间:{new Date(payInfo.date+5*60*60*1000).Format("yyyy-MM-dd hh:mm:ss")}</Row>
                                     </Col>
-                                    <Col span={8}>
+                                    <Col span={7}>
                                         <Row>
                                             <Col span={12}>
                                                 <Row style={{color:"#bfbfbf"}}>状态</Row>
@@ -263,7 +263,7 @@ class info extends React.Component {
                                         <Row>收件人:{payInfo.address.name}</Row>
                                         <Row>联系电话:{payInfo.address.tel}</Row>
                                         <Row>收货地址:{payInfo.address.area+" "+payInfo.address.detail}</Row>
-                                        <Row>买家留言:{payInfo.message}</Row>
+                                        <Row>买家留言:{payInfo.message===null?"无":payInfo.message}</Row>
                                     </Col>
                                 </Row>
                                 {/*商品信息*/}
@@ -310,13 +310,23 @@ const mapDispatchToProps = (dispatch) => {
         onEditComm:(commId)=>{
             dispatch(CommActions.Edit(commId));
         },
-        onUpdatePrice: (jwt,orderId,price) => {
+        onFetchOrderInfo: (orderId) => {
+            dispatch(Actions.Start());
+            dispatch(Actions.FetchOrderInfo(orderId,localStorage.getItem("RealFakeManagerJwt")));
+        },
+        onUpdatePrice: (jwt,orderId,price,manId) => {
             dispatch(Actions.Start());
             dispatch(Actions.UpdatePrice(jwt,orderId,price));
+            setTimeout(()=>{
+                dispatch(Actions.FetchOrderInfo(orderId,localStorage.getItem("RealFakeManagerJwt")));
+            },2000)
         },
-        onDeletePays: (jwt,orderIdList) => {
+        onDeletePays: (orderId,manId) => {
             dispatch(Actions.Start());
-            dispatch(Actions.DeletePays(jwt,orderIdList));
+            dispatch(Actions.DeletePays(localStorage.getItem("RealFakeManagerJwt"),orderId));
+            setTimeout(()=>{
+                dispatch(Actions.Fetching(manId,localStorage.getItem("RealFakeManagerJwt")));
+            },2000)
         },
     }
 };

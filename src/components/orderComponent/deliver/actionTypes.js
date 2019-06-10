@@ -28,3 +28,6 @@ export const FetchExpressSuccess = 'deliver/FetchExpressSuccess';
 export const FetchExcel = 'deliver/FetchExcel';
 export const FetchExcelSuccess = 'deliver/FetchExcelSuccess';
 
+export const FetchOrderInfo = 'deliver/FetchOrderInfo';
+export const FetchOrderInfoSuccess = 'deliver/FetchOrderInfoSuccess';
+

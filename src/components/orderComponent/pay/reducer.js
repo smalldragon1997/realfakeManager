@@ -18,7 +18,22 @@ export default (state = initState, action) => {
             return {...state, isLoading: true}
         }
         case ActionTypes.Success: {
-            return {...state, ...action.result, isLoading: false}
+            const data  = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state,isLoading:false}
+            }else{
+                return {...state ,payList:data.orderList,isLoading:false}
+            }
+        }
+        case ActionTypes.FetchOrderInfoSuccess: {
+            const data  = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state,isLoading:false}
+            }else{
+                return {...state ,payInfo:data.orderInfo,isLoading:false}
+            }
         }
         case ActionTypes.Filter: {
             return {...state, filter:action.filter,key:action.key, isLoading: false}
@@ -30,33 +45,21 @@ export default (state = initState, action) => {
             return {...state, payInfo:action.payInfo, isLoading: false}
         }
         case ActionTypes.UpdatePriceSuccess: {
-            let newPayList = state.payList;
-            for(let i=0;i<newPayList.length;i++){
-                if(newPayList[i].orderId===action.orderId){
-                    newPayList[i].total = action.price;
-                    break;
-                }
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("改价成功");
             }
-            let newPayInfo = state.payInfo;
-            if(newPayInfo !== undefined){
-                newPayInfo.total = action.price;
-            }
-            message.success("改价成功");
-            return {...state, payList:newPayList, payInfo:newPayInfo,isLoading: false}
+            return {...state,isLoading:false}
         }
 
         case ActionTypes.DeletePaysSuccess: {
-            let newPayList = state.payList;
-
-            for(let i=0;i<newPayList.length;i++){
-                for(let j=0;j<action.orderIdList.length;j++) {
-                    if (newPayList[i].orderId === action.orderIdList[j]) {
-                        newPayList.remove(i);
-                    }
-                }
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("删除订单成功");
             }
-            message.success("删除订单成功");
-            return {...state, payList:newPayList, isLoading: false}
+            return {...state,isLoading:false}
         }
         case ActionTypes.Failure: {
             message.error(action.error);

@@ -20,7 +20,7 @@ import {
     message,
     Table,
     Tag,
-    Divider, Upload, Select,Collapse
+    Divider, Upload, Select, Collapse
 } from 'antd';
 
 const Option = Select.Option;
@@ -47,7 +47,6 @@ class info extends React.Component {
     }
 
     componentDidMount() {
-
     }
 
     _cropCover() {
@@ -78,7 +77,7 @@ class info extends React.Component {
             <Spin spinning={isLoading}>
                 {
                     //权限-超级管理员-编辑类目
-                    !(info.isSuper || auth.edi_category) ? (
+                    !(info !== undefined && info.isSuper || auth.edi_category) ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
@@ -99,7 +98,7 @@ class info extends React.Component {
                                     </Col>
                                     <Col span={18}>
                                         <Input placeholder={"输入代金卷名"}
-                                            style={{width: "70%"}} value={disName}
+                                               style={{width: "70%"}} value={disName}
                                                onChange={(e) => {
                                                    this.setState({
                                                        disName: e.target.value
@@ -108,9 +107,9 @@ class info extends React.Component {
                                     </Col>
                                 </Row>
                                 {/*代金卷描述*/}
-                                <Row style={{padding: "3%", paddingTop: 0}}>
+                                <Row style={{padding: "3%", paddingTop: 0}} type={"flex"} align={"middle"}>
                                     <Col span={6} style={{textAlign: "right"}}>
-                                        代金卷描述：
+                                        代金卷价格：
                                     </Col>
                                     <Col span={18}>
                                         <Input
@@ -130,8 +129,9 @@ class info extends React.Component {
                                     </Col>
                                     <Col span={12}>
 
-                                        <Collapse bordered={false} >
-                                            <Panel header="选择代金卷封面" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
+                                        <Collapse bordered={false}>
+                                            <Panel header="选择代金卷封面" key="1"
+                                                   style={{background: '#f7f7f7', border: 0, overflow: 'hidden'}}>
 
                                                 <Row>
                                                     {
@@ -160,9 +160,10 @@ class info extends React.Component {
                                                                 return false;
                                                             }}
                                                         >
-                                                            {imageUrl ? <Avatar src={imageUrl} size={100} shape={"square"}/> : (
-                                                                null
-                                                            )}
+                                                            {imageUrl ?
+                                                                <Avatar src={imageUrl} size={100} shape={"square"}/> : (
+                                                                    null
+                                                                )}
                                                             <div>
                                                                 <Icon type={this.state.loading ? 'loading' : 'plus'}/>
                                                                 <div className="ant-upload-text">上传封面</div>
@@ -199,20 +200,18 @@ class info extends React.Component {
                                          xxl={{span: 3, offset: 6}} style={{padding: "1%"}}>
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
-                                                    if(disName===undefined||disName===""||
-                                                        price===undefined||price===""||
-                                                        cover===undefined||cover===""){
+                                                    if (disName === undefined || disName === "" ||
+                                                        price === undefined || price === "" ||
+                                                        cover === undefined || cover === "") {
                                                         message.error("信息输入不完整");
-                                                    }else{
+                                                    } else {
                                                         onAdd({
+                                                            manId:info.manId,
                                                             disName: disName,
                                                             price: price,
                                                             cover: cover
                                                         });
-                                                        this.props.history.push("/commodity/discount/");
                                                     }
-                                                    console.log(this.state);
-
                                                 }}
                                         >确认添加</Button>
                                     </Col>

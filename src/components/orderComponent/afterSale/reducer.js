@@ -18,7 +18,22 @@ export default (state = initState, action) => {
             return {...state, isLoading: true}
         }
         case ActionTypes.Success: {
-            return {...state, ...action.result, isLoading: false}
+            const data  = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state,isLoading:false}
+            }else{
+                return {...state ,afterSaleList:data.afterSaleList,isLoading:false}
+            }
+        }
+        case ActionTypes.FetchAfterSaleInfoSuccess: {
+            const data  = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state,isLoading:false}
+            }else{
+                return {...state ,afterSaleInfo:data.afterSaleInfo,isLoading:false}
+            }
         }
         case ActionTypes.Edit: {
             return {...state, afterSaleInfo:action.afterSaleInfo, isLoading: false}
@@ -36,56 +51,44 @@ export default (state = initState, action) => {
             return {...state,start:0,end:9999999999999, isLoading: false}
         }
         case ActionTypes.DeleteAfterSalesSuccess: {
-            let newAfterSaleList = state.afterSaleList;
-
-            for(let i=0;i<newAfterSaleList.length;i++){
-                for(let j=0;j<action.aftIdList.length;j++) {
-                    if (newAfterSaleList[i].aftId === action.aftIdList[j]) {
-                        newAfterSaleList.remove(i);
-                    }
-                }
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("删除售后成功");
             }
-            message.success("删除售后成功");
-            return {...state, afterSaleList:newAfterSaleList,isLoading: false}
+            return {...state,isLoading:false}
+        }
+        case ActionTypes.LeaveMsgAfterSalesSuccess: {
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("留言成功");
+            }
+            return {...state,isLoading:false}
         }
         case ActionTypes.AgreeAfterSalesSuccess: {
-            let newAfterSaleList = state.afterSaleList;
-
-            for(let i=0;i<newAfterSaleList.length;i++){
-                for(let j=0;j<action.aftIdList.length;j++) {
-                    if (newAfterSaleList[i].aftId === action.aftIdList[j]) {
-                        newAfterSaleList[i].state=1;
-                    }
-                }
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("同意售后成功");
             }
-            message.success("同意售后成功");
-            return {...state, afterSaleList:newAfterSaleList,isLoading: false}
+            return {...state,isLoading:false}
         }
         case ActionTypes.CloseAfterSalesSuccess: {
-            let newAfterSaleList = state.afterSaleList;
-
-            for(let i=0;i<newAfterSaleList.length;i++){
-                for(let j=0;j<action.aftIdList.length;j++) {
-                    if (newAfterSaleList[i].aftId === action.aftIdList[j]) {
-                        newAfterSaleList[i].state=action.state;
-                    }
-                }
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("关闭售后成功");
             }
-            message.success("售后已关闭");
-            return {...state, afterSaleList:newAfterSaleList,isLoading: false}
+            return {...state,isLoading:false}
         }
         case ActionTypes.DisAgreeAfterSalesSuccess: {
-            let newAfterSaleList = state.afterSaleList;
-
-            for(let i=0;i<newAfterSaleList.length;i++){
-                for(let j=0;j<action.aftIdList.length;j++) {
-                    if (newAfterSaleList[i].aftId === action.aftIdList[j]) {
-                        newAfterSaleList[i].state=3;
-                    }
-                }
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("拒绝售后成功");
             }
-            message.success("拒绝售后成功");
-            return {...state, afterSaleList:newAfterSaleList,isLoading: false}
+            return {...state,isLoading:false}
         }
         case ActionTypes.Failure: {
             message.error(action.error);

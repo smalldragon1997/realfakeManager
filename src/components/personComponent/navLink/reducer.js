@@ -9,7 +9,6 @@ const initState = {
 export default (state = initState, action) => {
     switch (action.type) {
         case ActionTypes.Success: {
-
             return {...state, isLoading: false}
         }
         case ActionTypes.Failure: {

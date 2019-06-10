@@ -1,6 +1,9 @@
 // 用来判断action的类型
 export const Fetching = 'auth/fetching';
 
+export const FetchAuthInfo = 'auth/FetchAuthInfo';
+export const FetchAuthInfoSuccess = 'auth/FetchAuthInfoSuccess';
+
 // start
 export const Start = 'auth/start';
 

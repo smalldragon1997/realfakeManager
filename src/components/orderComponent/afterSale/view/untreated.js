@@ -24,6 +24,7 @@ import {
 import {getAfterSaleListByFilter} from '../selector';
 import ShowImages from '../../../commom/showImages';
 import ShowImage from '../../../commom/showImage';
+import afterSale from "./afterSale";
 
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
@@ -55,11 +56,12 @@ class main extends React.Component {
     }
 
     componentDidMount() {
-        this.props.onReDateFilter();
-        // 通过令牌去获取管理员列表
-        const jwt = localStorage.getItem("RealFakeManagerJwt");
-        if (jwt !== undefined || jwt !== null) {
-            this.props.onFetchAfterSales(jwt);
+        this.props.onFetchAfterSales(localStorage.getItem("RealFakeManagerJwt"));
+    }
+
+    componentWillReceiveProps(nextProps){
+        if(nextProps.info!==this.props.info&&nextProps.info!==undefined){
+            this.props.onFetchAfterSales(localStorage.getItem("RealFakeManagerJwt"));
         }
     }
 
@@ -76,7 +78,8 @@ class main extends React.Component {
             onAgreeAfterSales,
             onDateFilter,
             onReDateFilter,
-            onDisAgreeAfterSales
+            onDisAgreeAfterSales,
+            onFetchAfterSaleInfo
         } = this.props;
 
         const {
@@ -95,20 +98,16 @@ class main extends React.Component {
 
         const columns = [
             {
+                title: '商品封面',
+                dataIndex: 'cover',
+                key: 'cover',
+                render: cover => {
+                    return <ShowImage image={cover} size={50}/>
+                }
+            }, {
                 title: '售后号',
                 dataIndex: 'aftId',
                 key: 'aftId',
-            }, {
-                title: '订单号',
-                dataIndex: 'orderId',
-                key: 'orderId',
-            }, {
-                title: '商品封面',
-                dataIndex: 'commodity',
-                key: 'commodity',
-                render: commodity => {
-                    return <ShowImage images={commodity.cover} size={50}/>
-                }
             }, {
                 title: '退款金额',
                 dataIndex: 'price',
@@ -128,13 +127,13 @@ class main extends React.Component {
                         }} okText="确认" cancelText="点错了">
                         <Tag color="blue" key={afterSaleInfo.aftId + "1"}>同意</Tag>
                     </Popconfirm>
-                        <Popconfirm placement="top" title={"确定拒绝此售后申请吗？"} onConfirm={() => {
-                            this.setState({aftId:afterSaleInfo.aftId,visibleDisAgreeSingle:true})
-                        }} okText="确认" cancelText="点错了">
-                        <Tag color="red" key={afterSaleInfo.aftId + "1"}>拒绝</Tag>
-                    </Popconfirm>
+                        {/*<Popconfirm placement="top" title={"确定拒绝此售后申请吗？"} onConfirm={() => {*/}
+                            {/*this.setState({aftId:afterSaleInfo.aftId,visibleDisAgreeSingle:true})*/}
+                        {/*}} okText="确认" cancelText="点错了">*/}
+                        {/*<Tag color="red" key={afterSaleInfo.aftId + "1"}>拒绝</Tag>*/}
+                    {/*</Popconfirm>*/}
                     <Tag color="blue" key={afterSaleInfo.aftId + "2"} onClick={() => {
-                        onEditAfterSale(afterSaleInfo);
+                        onFetchAfterSaleInfo(afterSaleInfo.aftId);
                         this.props.history.push("/order/afterSale/info");
                     }}>详情</Tag>
                     <Popconfirm placement="top" title={"确定删除此售后申请吗？"} onConfirm={() => {
@@ -157,10 +156,9 @@ class main extends React.Component {
                 orderId: afterSaleList[i].orderId,
                 aftId: afterSaleList[i].aftId,
                 reason: afterSaleList[i].reason,
-                commodity: afterSaleList[i].commodity,
-                pictures: afterSaleList[i].pictures,
+                cover: afterSaleList[i].cover,
                 applyDate: new Date(afterSaleList[i].applyDate).Format("yyyy-MM-dd hh:mm:ss"),
-                price: "￥" + afterSaleList[i].commodity.price,
+                price: "￥" + afterSaleList[i].price,
                 actions: afterSaleList[i],
             })
         }
@@ -179,9 +177,7 @@ class main extends React.Component {
                                         if ( message === undefined) {
                                             message.error("请输入完整")
                                         } else {
-                                            let afterSaleIdList = [];
-                                            afterSaleIdList.push(aftId + "");
-                                            onAgreeAfterSales(localStorage.getItem("RealFakeManagerJwt"), afterSaleIdList,message);
+                                            onAgreeAfterSales(localStorage.getItem("RealFakeManagerJwt"), aftId,message);
                                             this.setState({
                                                 visibleAgreeSingle: false,
                                                 message: undefined,
@@ -337,40 +333,40 @@ class main extends React.Component {
                                     <Row type={"flex"} align={"middle"}
                                          style={{padding: "3%", paddingBottom: 10, paddingTop: 10}}>
                                         <Col span={6}>
-                                            <Popconfirm placement="top"
-                                                        title={"确定同意这" + selectedRowKeys.length + "个售后申请吗？"}
-                                                        onConfirm={() => {
-                                                            this.setState({visibleAgree:true})
-                                                        }} okText="确认" cancelText="点错了">
-                                                <Button type={"primary"}
-                                                        loading={isLoading}
-                                                        disabled={!selectedRowKeys.length > 0}
-                                                >同意</Button>
-                                            </Popconfirm>
-                                            <Popconfirm placement="top"
-                                                        title={"确定拒绝这" + selectedRowKeys.length + "个售后申请吗？"}
-                                                        onConfirm={() => {
-                                                            this.setState({visibleDisAgree:true})
-                                                        }} okText="确认" cancelText="点错了">
-                                                <Button type={"dashed"}
-                                                        loading={isLoading}
-                                                        disabled={!selectedRowKeys.length > 0}
-                                                >拒绝</Button>
-                                            </Popconfirm>
-                                            <Popconfirm placement="top"
-                                                        title={"确定删除这" + selectedRowKeys.length + "个售后申请吗？"}
-                                                        onConfirm={() => {
-                                                            onDeleteAfterSales(localStorage.getItem("RealFakeManagerJwt"), selectedRowKeys);
-                                                            this.setState({
-                                                                ...this.state,
-                                                                selectedRowKeys: []
-                                                            });
-                                                        }} okText="确认" cancelText="点错了">
-                                                <Button type={"danger"}
-                                                        loading={isLoading}
-                                                        disabled={!selectedRowKeys.length > 0}
-                                                >删除</Button>
-                                            </Popconfirm>
+                                            {/*<Popconfirm placement="top"*/}
+                                                        {/*title={"确定同意这" + selectedRowKeys.length + "个售后申请吗？"}*/}
+                                                        {/*onConfirm={() => {*/}
+                                                            {/*this.setState({visibleAgree:true})*/}
+                                                        {/*}} okText="确认" cancelText="点错了">*/}
+                                                {/*<Button type={"primary"}*/}
+                                                        {/*loading={isLoading}*/}
+                                                        {/*disabled={!selectedRowKeys.length > 0}*/}
+                                                {/*>同意</Button>*/}
+                                            {/*</Popconfirm>*/}
+                                            {/*<Popconfirm placement="top"*/}
+                                                        {/*title={"确定拒绝这" + selectedRowKeys.length + "个售后申请吗？"}*/}
+                                                        {/*onConfirm={() => {*/}
+                                                            {/*this.setState({visibleDisAgree:true})*/}
+                                                        {/*}} okText="确认" cancelText="点错了">*/}
+                                                {/*<Button type={"dashed"}*/}
+                                                        {/*loading={isLoading}*/}
+                                                        {/*disabled={!selectedRowKeys.length > 0}*/}
+                                                {/*>拒绝</Button>*/}
+                                            {/*</Popconfirm>*/}
+                                            {/*<Popconfirm placement="top"*/}
+                                                        {/*title={"确定删除这" + selectedRowKeys.length + "个售后申请吗？"}*/}
+                                                        {/*onConfirm={() => {*/}
+                                                            {/*onDeleteAfterSales(localStorage.getItem("RealFakeManagerJwt"), selectedRowKeys);*/}
+                                                            {/*this.setState({*/}
+                                                                {/*...this.state,*/}
+                                                                {/*selectedRowKeys: []*/}
+                                                            {/*});*/}
+                                                        {/*}} okText="确认" cancelText="点错了">*/}
+                                                {/*<Button type={"danger"}*/}
+                                                        {/*loading={isLoading}*/}
+                                                        {/*disabled={!selectedRowKeys.length > 0}*/}
+                                                {/*>删除</Button>*/}
+                                            {/*</Popconfirm>*/}
 
 
                                         </Col>
@@ -423,20 +419,20 @@ class main extends React.Component {
                                     <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
                                         <Table
                                             defaultExpandAllRows
-                                            expandedRowRender={afterSaleInfo =>
-                                                <span>
-                                                    <Row style={{marginLeft:"5%"}}>
-                                                        申请原因：{afterSaleInfo.reason}
-                                                    </Row>
-                                                    <Row style={{marginLeft:"5%"}}>
-                                                        售后拍照：
-                                                        {
-                                                            afterSaleInfo.pictures===undefined||afterSaleInfo.pictures.length===0?("无"):(
-                                                                <ShowImages images={afterSaleInfo.pictures} size={50}/>
-                                                            )
-                                                        }
-                                                    </Row>
-                                                </span>}
+                                            // expandedRowRender={afterSaleInfo =>
+                                            //     <span>
+                                            //         <Row style={{marginLeft:"5%"}}>
+                                            //             申请原因：{afterSaleInfo.reason}
+                                            //         </Row>
+                                            //         <Row style={{marginLeft:"5%"}}>
+                                            //             售后拍照：
+                                            //             {
+                                            //                 afterSaleInfo.pictures===undefined||afterSaleInfo.pictures.length===0?("无"):(
+                                            //                     <ShowImages images={afterSaleInfo.pictures} size={50}/>
+                                            //                 )
+                                            //             }
+                                            //         </Row>
+                                            //     </span>}
                                             style={{width: "100%"}}
                                             rowSelection={{
                                                 selectedRowKeys,
@@ -467,7 +463,7 @@ const mapStateToProps = (state) => {
     return {
         auth: navLink.auth,
         info: navLink.info,
-        afterSaleList: getAfterSaleListByFilter(afterSale.afterSaleList, afterSale.filter, afterSale.key, afterSale.start, afterSale.end, 0, new Date()),
+        afterSaleList: afterSale.afterSaleList.filter(item=>item.state===1),
         isLoading: afterSale.isLoading
     }
 };
@@ -495,6 +491,10 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(Actions.Start());
             dispatch(Actions.Fetching(jwt));
         },
+        onFetchAfterSaleInfo: (aftId) => {
+            dispatch(Actions.Start());
+            dispatch(Actions.FetchAfterSaleInfo(aftId,localStorage.getItem("RealFakeManagerJwt")));
+        },
         onEditAfterSale: (AfterSaleInfo) => {
             dispatch(Actions.Start());
             dispatch(Actions.Edit(AfterSaleInfo));
@@ -503,9 +503,9 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(Actions.Start());
             dispatch(Actions.DeleteAfterSales(jwt, aftIdList));
         },
-        onAgreeAfterSales: (jwt, aftIdList,message) => {
+        onAgreeAfterSales: (jwt, aftId,message) => {
             dispatch(Actions.Start());
-            dispatch(Actions.AgreeAfterSales(jwt, aftIdList,message));
+            dispatch(Actions.AgreeAfterSales(jwt, aftId,message));
         },
         onDisAgreeAfterSales: (jwt, aftIdList,message) => {
             dispatch(Actions.Start());

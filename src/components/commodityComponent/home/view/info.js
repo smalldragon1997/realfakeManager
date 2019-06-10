@@ -20,22 +20,13 @@ import {
     message,
     Table,
     Tag,
-    Divider, Upload, Select,Collapse
+    Divider, Upload, Select, Collapse
 } from 'antd';
 
 const Option = Select.Option;
-import ShowImage from '../../../commom/showImage'
 import ShowImages from '../../../commom/showImages'
 
-const CheckboxGroup = Checkbox.Group;
-const {TextArea} = Input;
 const Panel = Collapse.Panel;
-
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
 
 class info extends React.Component {
 
@@ -46,39 +37,12 @@ class info extends React.Component {
             types: [],
             ids: [],
 
-
-            oldPictures: [],
             fileList: [],
         });
     }
 
     componentDidMount() {
-
-        //获取主页信息
-        this.searchHome();
-    }
-
-    // 搜索主页
-    searchHome() {
-        client.search({
-            index: 'home_pic',
-            type: 'home_pic',
-            body: {
-                query: {
-                    match_all: {}
-                }
-            }
-        }).then(
-            function (body) {
-                this.setState({
-                    ...body.hits.hits[0]._source,
-                    oldPictures: body.hits.hits[0]._source.pictures
-                });
-            }.bind(this),
-            function (error) {
-                console.trace(error.message);
-            }
-        );
+        this.props.onFetch();
     }
 
     render() {
@@ -87,13 +51,13 @@ class info extends React.Component {
             onUpdate,
             auth,
             info,
+            homeInfo,
         } = this.props;
 
         const {
             pictures,
             types,
             ids,
-            oldPictures,
             fileList,
         } = this.state;
 
@@ -101,11 +65,11 @@ class info extends React.Component {
             <Spin spinning={isLoading}>
                 {
                     //权限-超级管理员-编辑类目
-                    !(info.isSuper || auth.edi_category) ? (
+                    !(info !== undefined && info.isSuper && homeInfo !== undefined || auth.edi_category) ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
-                                    <Divider>权限不足</Divider>
+                                    <Divider>权限不足或主页信息错误</Divider>
                                 </Row>
                             </Col>
                         </Row>
@@ -123,23 +87,25 @@ class info extends React.Component {
                                     <Col span={12}>
 
                                         <Collapse bordered={false} defaultActiveKey={['1']}>
-                                            <Panel header="选择主页图片" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
+                                            <Panel header="选择主页图片" key="1"
+                                                   style={{background: '#f7f7f7', border: 0, overflow: 'hidden'}}>
                                                 {
-                                                    oldPictures.length!==0?(
+                                                    homeInfo.length !== 0 ? (
                                                         <span>
-                                                            <ShowImages images={oldPictures} size={70}/><br/>
+                                                            <ShowImages images={homeInfo.reduce((list,next)=>(list.concat(next.url)),[])} size={70}/><br/>
                                                 (此操作将删除历史图片)<br/>
                                                         </span>
-                                                    ):null
+                                                    ) : null
                                                 }
                                                 <Upload
+                                                    headers={{Authorization: "bearer " + localStorage.getItem("RealFakeManagerJwt")}}
                                                     accept={"image/*"}
                                                     multiple
-                                                    action="/mock/upload"
+                                                    action="/api/v1/data/file"
                                                     listType="picture-card"
                                                     fileList={fileList}
                                                     onChange={({fileList}) => this.setState({
-                                                        types: fileList.reduce((list, next) => (list.concat("commodity")), []),
+                                                        types: fileList.reduce((list, next) => (list.concat("commodities")), []),
                                                         ids: fileList.reduce((list, next) => (list.concat("")), []),
                                                         pictures: fileList.reduce((list, next) => (list.concat(next.name)), []),
                                                         fileList
@@ -163,7 +129,8 @@ class info extends React.Component {
                                     <Col span={12}>
 
                                         <Collapse bordered={false} defaultActiveKey={['1']}>
-                                            <Panel header="设置图片跳转" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
+                                            <Panel header="设置图片跳转" key="1"
+                                                   style={{background: '#f7f7f7', border: 0, overflow: 'hidden'}}>
 
                                                 (按图片顺序)
                                                 {
@@ -172,7 +139,7 @@ class info extends React.Component {
                                                             <Row style={{padding: 5}}>
                                                                 <Col span={8}>
                                                                     <Select
-                                                                        value={types[index] === "" ? ("commodity") : (types[index])}
+                                                                        value={types[index] === "" ? ("commodities") : (types[index])}
                                                                         notFoundContent={"没有匹配内容"} allowClear
                                                                         dropdownMatchSelectWidth={false}
                                                                         disabled={isLoading}
@@ -187,11 +154,14 @@ class info extends React.Component {
                                                                         }}
                                                                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                                                                     >
-                                                                        <Option value={"commodity"}
+                                                                        <Option value={"commodities"}
                                                                                 key={"commodity"}>跳转商品</Option>
-                                                                        <Option value={"brand"} key={"brand"}>跳转品牌</Option>
-                                                                        <Option value={"series"} key={"series"}>跳转系列</Option>
-                                                                        <Option value={"unite"} key={"unite"}>跳转联名</Option>
+                                                                        <Option value={"brands"}
+                                                                                key={"brand"}>跳转品牌</Option>
+                                                                        <Option value={"series"}
+                                                                                key={"series"}>跳转系列</Option>
+                                                                        <Option value={"unites"}
+                                                                                key={"unite"}>跳转联名</Option>
                                                                     </Select>
                                                                 </Col>
                                                                 <Col span={8}>
@@ -215,6 +185,11 @@ class info extends React.Component {
                                                 }
                                             </Panel>
                                         </Collapse>
+                                        当前图片跳转(按顺序)<br/>{
+                                        homeInfo.map((item,index)=>(
+                                            <Row>{"跳转："+item.type+" 编号："+item.id}</Row>
+                                        ))
+                                    }
                                     </Col>
                                 </Row>
                                 {/*确认*/}
@@ -224,17 +199,17 @@ class info extends React.Component {
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
                                                     let idsFlag = false;
-                                                    for (let i=0;i<pictures.length;i++){
-                                                        if(ids[i]===""){
-                                                            idsFlag=true;
+                                                    for (let i = 0; i < pictures.length; i++) {
+                                                        if (ids[i] === "") {
+                                                            idsFlag = true;
                                                             break;
                                                         }
                                                     }
-                                                    if(pictures.length===0||
-                                                        types.length===0||
-                                                        ids.length===0||idsFlag){
+                                                    if (pictures.length === 0 ||
+                                                        types.length === 0 ||
+                                                        ids.length === 0 || idsFlag) {
                                                         message.error("信息输入不完整");
-                                                    }else{
+                                                    } else {
                                                         onUpdate({
                                                             pictures: pictures,
                                                             types: types,
@@ -272,6 +247,7 @@ const mapStateToProps = (state) => {
     return {
         auth: navLink.auth,
         info: navLink.info,
+        homeInfo:home.homeInfo,
         isLoading: home.isLoading
     }
 };
@@ -280,8 +256,13 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         onUpdate: (homeInfo) => {
+            message.loading("正在更新主页信息...请稍后");
             dispatch(Actions.Start());
             dispatch(Actions.Update(localStorage.getItem("RealFakeManagerJwt"), homeInfo));
+        },
+        onFetch: () => {
+            dispatch(Actions.Start());
+            dispatch(Actions.Fetching());
         },
     }
 };

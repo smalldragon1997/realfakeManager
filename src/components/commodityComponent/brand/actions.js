@@ -4,9 +4,9 @@ export const Start = () => ({
     type : ActionType.Start
 });
 
-export const Success = (auths) => ({
+export const Success = (result) => ({
     type : ActionType.Success,
-    auths
+    result
 });
 
 export const Failure = (error) => ({
@@ -14,21 +14,27 @@ export const Failure = (error) => ({
     error
 });
 
-export const Fetching = (jwt) => ({
-    type : ActionType.Fetching,
+export const Fetching = () => ({
+    type : ActionType.Fetching
+});
+
+export const FetchBrandInfo = (brandId) => ({
+    type : ActionType.FetchBrandInfo,brandId
+});
+export const FetchBrandInfoSuccess = (result) => ({
+    type : ActionType.FetchBrandInfoSuccess,result
+});
+
+
+export const DeleteBrand = (brandId,jwt) => ({
+    type : ActionType.DeleteBrand,brandId,
     jwt
 });
 
 
-export const DeleteBrand = (brandIdList,jwt) => ({
-    type : ActionType.DeleteBrand,brandIdList,
-    jwt
-});
-
-
-export const DeleteBrandSuccess = (brandIdList) => ({
+export const DeleteBrandSuccess = (result) => ({
     type : ActionType.DeleteBrandSuccess,
-    brandIdList
+    result
 });
 
 export const UpdateBrand = (jwt,brandInfo) => ({
@@ -37,8 +43,8 @@ export const UpdateBrand = (jwt,brandInfo) => ({
 });
 
 
-export const UpdateBrandSuccess = (brandInfo) => ({
-    type : ActionType.UpdateBrandSuccess,brandInfo
+export const UpdateBrandSuccess = (result) => ({
+    type : ActionType.UpdateBrandSuccess,result
 });
 
 export const AddBrand = (jwt,brandInfo) => ({
@@ -47,8 +53,8 @@ export const AddBrand = (jwt,brandInfo) => ({
 });
 
 
-export const AddBrandSuccess = (brandInfo) => ({
-    type : ActionType.AddBrandSuccess,brandInfo
+export const AddBrandSuccess = (result) => ({
+    type : ActionType.AddBrandSuccess,result
 });
 
 

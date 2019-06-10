@@ -23,3 +23,6 @@ export const Add = 'type/Add';
 export const AddSuccess = 'type/AddSuccess';
 
 export const Edit = 'type/Edit';
+
+export const FetchTypeInfo = 'type/FetchTypeInfo';
+export const FetchTypeInfoSuccess = 'type/FetchTypeInfoSuccess';

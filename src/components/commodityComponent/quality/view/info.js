@@ -25,12 +25,6 @@ const Option = Select.Option;
 const CheckboxGroup = Checkbox.Group;
 const {TextArea} = Input;
 
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
-
 class info extends React.Component {
 
     constructor(props) {
@@ -45,32 +39,9 @@ class info extends React.Component {
     }
 
     componentDidMount() {
-
-        //获取品质信息
-        this.searchQuality(this.props.qualityId);
-    }
-
-
-
-    // 搜索品质
-    searchQuality(qualId) {
-        if (qualId !== undefined) {
-            client.get({
-                index: 'quality',
-                type: 'quality',
-                id: qualId
-            }).then(
-                function (body) {
-                    this.setState({
-                        ...body._source,
-                    });
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
+        if(this.props.qualityId!==undefined){
+            this.props.onFetchQualityInfo(this.props.qualityId);
         }
-
     }
 
     render() {
@@ -79,17 +50,18 @@ class info extends React.Component {
             isLoading, // 是否加载中
             onDelete,
             onUpdate,
+            qualityInfo,
+            info
         } = this.props;
 
         const {
             qualName,
-            manId,
         } = this.state;
 
         return (
             <Spin spinning={isLoading}>
                 {
-                    qualityId === undefined ? (
+                    qualityInfo === undefined ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
@@ -101,7 +73,7 @@ class info extends React.Component {
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
-                                    <Divider>品质信息(发布管理员:{manId})</Divider>
+                                    <Divider>品质信息(发布管理员:{qualityInfo.managerInfo.nickname})</Divider>
                                 </Row>
                                 {/*品质名*/}
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
@@ -109,7 +81,7 @@ class info extends React.Component {
                                         品质名：
                                     </Col>
                                     <Col span={18}>
-                                        <Input style={{width: "70%"}} value={qualName}
+                                        <Input style={{width: "70%"}} value={qualName} placeholder={qualityInfo.qualName}
                                                onChange={(e) => {
                                                    this.setState({
                                                        qualName: e.target.value
@@ -123,15 +95,11 @@ class info extends React.Component {
                                          xxl={{span: 3, offset: 6}} style={{padding: "1%"}}>
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
-                                                    if(qualName===undefined||qualName===""){
-                                                        message.error("信息输入不完整");
-                                                    }else{
-                                                        onUpdate({
-                                                            qualName: qualName
-                                                        });
-                                                        this.props.history.push("/commodity/quality/");
-                                                    }
-                                                    console.log(this.state);
+                                                    onUpdate({
+                                                        manId:info.manId,
+                                                        qualityId:qualityInfo.qualId,
+                                                        qualName: qualName===undefined||qualName===""?qualityInfo.qualName:qualName
+                                                    });
                                                 }}
                                         >修改</Button>
                                     </Col>
@@ -139,7 +107,7 @@ class info extends React.Component {
 
                                         <Popconfirm placement="top" title={"确定删除品质 " + qualName + " 吗？"}
                                                     onConfirm={() => {
-                                                        onDelete(qualId);
+                                                        onDelete(qualityInfo.qualId);
                                                         this.props.history.push("/commodity/quality/");
                                                     }} okText="确认" cancelText="点错了">
                                             <Button
@@ -169,8 +137,11 @@ class info extends React.Component {
 // props绑定state
 const mapStateToProps = (state) => {
     const quality = state.commodity.quality;
+    const navLink = state.navLink;
     return {
+        info: navLink.info,
         qualityId: quality.qualityId,
+        qualityInfo: quality.qualityInfo,
         isLoading: quality.isLoading
     }
 };
@@ -179,13 +150,16 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         onDelete: (qualId) => {
-            let qualIdList = [];
             dispatch(Actions.Start());
-            dispatch(Actions.Delete(qualIdList.push(qualId), localStorage.getItem("RealFakeManagerJwt")));
+            dispatch(Actions.Delete(qualId, localStorage.getItem("RealFakeManagerJwt")));
         },
         onUpdate: (qualityInfo) => {
             dispatch(Actions.Start());
             dispatch(Actions.Update(localStorage.getItem("RealFakeManagerJwt"), qualityInfo));
+        },
+        onFetchQualityInfo: (qualityId) => {
+            dispatch(Actions.Start());
+            dispatch(Actions.FetchQualityInfo(qualityId));
         },
     }
 };

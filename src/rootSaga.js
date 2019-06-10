@@ -12,9 +12,13 @@ function* rootSaga() {
     /*The saga is waiting for a action called LOAD_DASHBOARD to be activated */
     yield [
         fork(loginSaga.watchLoginSaga), // 登录
+
         fork(navSaga.watchSaveInfo), // 保存登录信息
         fork(navSaga.watchAuthJwt), // 验证jwt令牌
+        fork(navSaga.watchLogOut), // 退出登录
+
         fork(highSaga.watchFetchManagersSaga), // 获取管理员列表
+        fork(highSaga.watchFetchManagerSaga), // 获取管理员信息
         fork(highSaga.watchDelManagerSaga), // 删除管理员
         fork(highSaga.watchForbidManagerSaga), // 禁用管理员
         fork(highSaga.watchCancelForbidManagerSaga), // 取消禁用管理员
@@ -23,6 +27,8 @@ function* rootSaga() {
         fork(highSaga.watchAddManagerSaga), // 添加管理员信息
 
         fork(highSaga.watchAddAuthSaga), // 添加权限信息
+        fork(highSaga.watchFetchAuthInfoSaga), // 添加权限信息
+        fork(highSaga.watchFetchAuthSaga), // 添加权限信息
         fork(highSaga.watchDelAuthSaga), // 删除权限
         fork(highSaga.watchUpdateAuthSaga), // 更新权限信息
 
@@ -35,10 +41,12 @@ function* rootSaga() {
         fork(allSaga.watchFetchVisitSaga), // 获取访问列表
 
         fork(orderSaga.watchFetchPaysSaga), // 获取未付款订单列表
+        fork(orderSaga.watchFetchOrderInfoSaga), // 获取未付款订单列表
         fork(orderSaga.watchDeletePaysSaga), // 删除未付款订单列表
         fork(orderSaga.watchUpdatePriceSaga), // 改价未付款订单
 
         fork(orderSaga.watchDeleteDeliversSaga), // 删除代发货订单列表
+        fork(orderSaga.watchFetchDeliverInfoSaga), // 发货
         fork(orderSaga.watchDeliverSaga), // 发货
         fork(orderSaga.watchFetchDeliversSaga), // 获取待付款订单列表
         fork(orderSaga.watchFetchExpressSaga), // 获取物流列表
@@ -52,14 +60,18 @@ function* rootSaga() {
 
         fork(orderSaga.watchFetchDoneOrdersSaga), // 获取已完成订单列表
         fork(orderSaga.watchDeleteDoneOrdersSaga), // 删除已完成物流信息
+        fork(orderSaga.watchFetchDoneInfoSaga), // 删除已完成物流信息
 
         fork(orderSaga.watchFetchAfterSalesSaga), // 获取售后列表
+        fork(orderSaga.watchFetchAfterSaleInfoSaga), // 获取售后
         fork(orderSaga.watchDeleteDoneAfterSalesSaga), // 删除售后
         fork(orderSaga.watchAgreeAfterSalesSaga), // 同意售后
         fork(orderSaga.watchDisAgreeAfterSalesSaga), // 拒绝售后
         fork(orderSaga.watchCloseAfterSalesSaga), // 关闭售后
 
         fork(commSaga.watchAddCommoditySaga), // 添加商品
+        fork(commSaga.watchFetchCommoditySaga), // 获取商品信息
+        fork(commSaga.watchFetchCommodityListSaga), // 获取商品列表
         fork(commSaga.watchDeleteCommoditySaga), // 删除商品
         fork(commSaga.watchUpdateCommoditySaga), // 更新商品
 
@@ -67,43 +79,61 @@ function* rootSaga() {
         fork(commSaga.watchDeleteCommentsSaga), // 删除新增评论
 
         fork(commSaga.watchAddBrandSaga), // 添加品牌
+        fork(commSaga.watchFetchBrandListSaga), // 获取品牌列表
+        fork(commSaga.watchFetchBrandInfoSaga), // 获取品牌信息
         fork(commSaga.watchDeleteBrandSaga), // 删除品牌
         fork(commSaga.watchUpdateBrandSaga), // 更新品牌
 
         fork(commSaga.watchAddUniteSaga), // 添加联名
+        fork(commSaga.watchFetchUniteListSaga), // 获取列表
+        fork(commSaga.watchFetchUniteInfoSaga), // 获取信息
         fork(commSaga.watchDeleteUniteSaga), // 删除联名
         fork(commSaga.watchUpdateUniteSaga), // 更新联名
 
         fork(commSaga.watchAddSeriesSaga), // 添加系列
+        fork(commSaga.watchFetchSeriesListSaga), // 获取列表
+        fork(commSaga.watchFetchSeriesInfoSaga), // 获取信息
         fork(commSaga.watchDeleteSeriesSaga), // 删除系列
         fork(commSaga.watchUpdateSeriesSaga), // 更新系列
 
         fork(commSaga.watchAddTypeSaga), // 添加类型
+        fork(commSaga.watchFetchTypeListSaga), // 获取列表
+        fork(commSaga.watchFetchTypeInfoSaga), // 获取信息
         fork(commSaga.watchDeleteTypeSaga), // 删除类型
         fork(commSaga.watchUpdateTypeSaga), // 更新类型
 
         fork(commSaga.watchAddQualitySaga), // 添加品质
+        fork(commSaga.watchFetchQualityListSaga), // 获取列表
+        fork(commSaga.watchFetchQualityInfoSaga), // 获取信息
         fork(commSaga.watchDeleteQualitySaga), // 删除品质
         fork(commSaga.watchUpdateQualitySaga), // 更新品质
 
         fork(commSaga.watchAddSizeSaga), // 添加尺码
+        fork(commSaga.watchFetchSizeListSaga), // 获取列表
+        fork(commSaga.watchFetchSizeInfoSaga), // 获取信息
         fork(commSaga.watchDeleteSizeSaga), // 删除尺码
         fork(commSaga.watchUpdateSizeSaga), // 更新尺码
 
         fork(commSaga.watchAddExpressSaga), // 添加快递
+        fork(commSaga.watchFetchExpressListSaga), // 快递列表
+        fork(commSaga.watchFetchExpressInfoSaga), // 快递信息
         fork(commSaga.watchDeleteExpressSaga), // 删除快递
         fork(commSaga.watchUpdateExpressSaga), // 更新快递
 
+        fork(commSaga.watchFetchDiscountListSaga), // 获取代金卷列表
+        fork(commSaga.watchFetchDiscountInfoSaga), // 获取代金卷信息
         fork(commSaga.watchAddDiscountSaga), // 添加代金卷
         fork(commSaga.watchDeleteDiscountSaga), // 删除代金卷
         fork(commSaga.watchUpdateDiscountSaga), // 更新代金卷
 
         fork(commSaga.watchUpdateHomeSaga), // 更新主页信息
+        fork(commSaga.watchFetchHomeSaga), // 获取主页信息
 
         fork(userSaga.watchDeleteUserSaga), // 删除用户
         fork(userSaga.watchDiscountUserSaga), // 代金卷设置
 
         fork(personSaga.watchUpdateManagerInfoSaga), // 更新个人信息
+        fork(personSaga.watchUpdatePwdSaga), // 更新密码
     ];
 }
 export default rootSaga;

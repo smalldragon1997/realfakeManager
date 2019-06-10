@@ -89,7 +89,9 @@ class main extends React.Component {
             }, {
                 title: '状态',
                 dataIndex: 'state',
-                render: isForbidden => (isForbidden ? ("禁用") : ("可用")),
+                render: isForbidden => (isForbidden ? ( <Tag color="grey" key={1} onClick={() => {
+                }}>已被禁用</Tag>) : (<Tag color="red" key={2} onClick={() => {
+                }}>正常使用</Tag>)),
                 key: 'state',
             }, {
                 title: '操作',
@@ -102,26 +104,14 @@ class main extends React.Component {
                 // 跳转
                 this.props.history.push("/high/manager/info");
             }}>编辑</Tag>
-                    {
-                        manager.isForbidden ? (
-                            <Tag color="grey" key={manager.manId + "2"} onClick={() => {
-                                // 取消禁用管理员
-                                onCancelForbiddenManager(manager.manId)
-                            }}>取消禁用</Tag>
-                        ) : (
-                            <Tag color="grey" key={manager.manId + "2"} onClick={() => {
-                                // 禁用管理员
-                                onForbiddenManager(manager.manId)
-                            }}>禁用</Tag>
-                        )
-                    }
-                    <Popconfirm placement="top" title={"确定删除管理员 " + manager.nickname + " 吗？"} onConfirm={() => {
-                        // 删除管理员
-                        onDelManager(manager.manId)
-                    }} okText="确认" cancelText="点错了">
 
-                    <Tag color="red" key={manager.manId + "3"}>删除</Tag>
-                    </Popconfirm>
+                    {/*<Popconfirm placement="top" title={"确定删除管理员 " + manager.nickname + " 吗？"} onConfirm={() => {*/}
+                        {/*// 删除管理员*/}
+                        {/*onDelManager(manager.manId)*/}
+                    {/*}} okText="确认" cancelText="点错了">*/}
+
+                    {/*<Tag color="red" key={manager.manId + "3"}>删除</Tag>*/}
+                    {/*</Popconfirm>*/}
         </span>),
             }];
         // 表格数据填充
@@ -158,44 +148,44 @@ class main extends React.Component {
                                     {/*批量操作和过滤条件*/}
                                     <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0,paddingBottom:"1%"}}>
                                         <Col span={6}>
-                                            <Button type={"primary"} onClick={() => {
-                                                // 禁用多个管理员
-                                                onForbiddenManagers(selectedRowKeys);
-                                                this.setState({
-                                                    ...this.state,
-                                                    selectedRowKeys: []
-                                                });
-                                            }}
-                                                    loading={isLoading}
-                                                    disabled={!selectedRowKeys.length > 0}
-                                            >禁用</Button>
-                                            <Button onClick={() => {
-                                                // 取消禁用多个管理员
-                                                onCancelForbiddenManagers(selectedRowKeys);
-                                                this.setState({
-                                                    ...this.state,
-                                                    selectedRowKeys: []
-                                                });
-                                            }}
-                                                    loading={isLoading}
-                                                    disabled={!selectedRowKeys.length > 0}
-                                            >取消禁用</Button>
+                                            {/*<Button type={"primary"} onClick={() => {*/}
+                                                {/*// 禁用多个管理员*/}
+                                                {/*onForbiddenManagers(selectedRowKeys);*/}
+                                                {/*this.setState({*/}
+                                                    {/*...this.state,*/}
+                                                    {/*selectedRowKeys: []*/}
+                                                {/*});*/}
+                                            {/*}}*/}
+                                                    {/*loading={isLoading}*/}
+                                                    {/*disabled={!selectedRowKeys.length > 0}*/}
+                                            {/*>禁用</Button>*/}
+                                            {/*<Button onClick={() => {*/}
+                                                {/*// 取消禁用多个管理员*/}
+                                                {/*onCancelForbiddenManagers(selectedRowKeys);*/}
+                                                {/*this.setState({*/}
+                                                    {/*...this.state,*/}
+                                                    {/*selectedRowKeys: []*/}
+                                                {/*});*/}
+                                            {/*}}*/}
+                                                    {/*loading={isLoading}*/}
+                                                    {/*disabled={!selectedRowKeys.length > 0}*/}
+                                            {/*>取消禁用</Button>*/}
 
-                                            <Popconfirm placement="top"
-                                                        title={"确定删除这" + selectedRowKeys.length + "个管理员吗？"}
-                                                        onConfirm={() => {
-                                                            // 删除多个管理员
-                                                            onDelManagers(selectedRowKeys);
-                                                            this.setState({
-                                                                ...this.state,
-                                                                selectedRowKeys: []
-                                                            });
-                                                        }} okText="确认" cancelText="点错了">
-                                                <Button type={"danger"}
-                                                        loading={isLoading}
-                                                        disabled={!selectedRowKeys.length > 0}
-                                                >删除</Button>
-                                            </Popconfirm>
+                                            {/*<Popconfirm placement="top"*/}
+                                                        {/*title={"确定删除这" + selectedRowKeys.length + "个管理员吗？"}*/}
+                                                        {/*onConfirm={() => {*/}
+                                                            {/*// 删除多个管理员*/}
+                                                            {/*onDelManagers(selectedRowKeys);*/}
+                                                            {/*this.setState({*/}
+                                                                {/*...this.state,*/}
+                                                                {/*selectedRowKeys: []*/}
+                                                            {/*});*/}
+                                                        {/*}} okText="确认" cancelText="点错了">*/}
+                                                {/*<Button type={"danger"}*/}
+                                                        {/*loading={isLoading}*/}
+                                                        {/*disabled={!selectedRowKeys.length > 0}*/}
+                                                {/*>删除</Button>*/}
+                                            {/*</Popconfirm>*/}
 
                                         </Col>
                                         <Col span={18}>

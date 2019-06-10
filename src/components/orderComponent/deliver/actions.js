@@ -14,31 +14,39 @@ export const Failure = (error) => ({
     error
 });
 
-export const Fetching = (jwt) => ({
-    type : ActionType.Fetching,
+export const Fetching = (manId,jwt) => ({
+    type : ActionType.Fetching,manId,
     jwt
 });
 
+export const FetchOrderInfo = (orderId,jwt) => ({
+    type : ActionType.FetchOrderInfo,orderId,
+    jwt
+});
 
-export const Deliver = (jwt,orderId,expId,number,expMessage) => ({
+export const FetchOrderInfoSuccess = (result) => ({
+    type : ActionType.FetchOrderInfoSuccess,result
+});
+
+export const Deliver = (jwt,info) => ({
     type : ActionType.Deliver,
-    jwt,orderId,expId,number,expMessage
+    jwt,info
 });
 
-export const DeliverSuccess = (orderId) => ({
+export const DeliverSuccess = (result) => ({
     type : ActionType.DeliverSuccess,
-    orderId
+    result
 });
 
 
-export const DeleteDelivers = (jwt,orderIdList) => ({
+export const DeleteDelivers = (jwt,orderId) => ({
     type : ActionType.DeleteDelivers,
-    jwt,orderIdList
+    jwt,orderId
 });
 
-export const DeleteDeliversSuccess = (orderIdList) => ({
+export const DeleteDeliversSuccess = (result) => ({
     type : ActionType.DeleteDeliversSuccess,
-    orderIdList
+    result
 });
 
 export const Filter = (filter,key) => ({

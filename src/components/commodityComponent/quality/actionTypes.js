@@ -23,3 +23,6 @@ export const Add = 'quality/Add';
 export const AddSuccess = 'quality/AddSuccess';
 
 export const Edit = 'quality/Edit';
+
+export const FetchQualityInfo = 'quality/FetchQualityInfo';
+export const FetchQualityInfoSuccess = 'quality/FetchQualityInfoSuccess';

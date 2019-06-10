@@ -25,7 +25,17 @@ export const Update = (jwt,managerInfo) => ({
 });
 
 
-export const UpdateSuccess = (managerInfo) => ({
-    type : ActionType.UpdateSuccess,managerInfo
+export const UpdateSuccess = (result) => ({
+    type : ActionType.UpdateSuccess,result
 });
 
+
+export const UpdatePwd = (jwt,pwdInfo) => ({
+    type : ActionType.UpdatePwd,pwdInfo,
+    jwt
+});
+
+
+export const UpdatePwdSuccess = (result) => ({
+    type : ActionType.UpdatePwdSuccess,result
+});

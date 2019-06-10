@@ -41,7 +41,6 @@ class info extends React.Component {
     }
 
 
-
     render() {
         const {
             auth,
@@ -58,7 +57,7 @@ class info extends React.Component {
             <Spin spinning={isLoading}>
                 {
                     //品质-超级管理员-编辑类目
-                    !(info.isSuper || auth.edi_category) ? (
+                    !(info !== undefined && info.isSuper || auth.edi_category) ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
@@ -79,7 +78,7 @@ class info extends React.Component {
                                     </Col>
                                     <Col span={18}>
                                         <Input placeholder={"输入品质名"}
-                                            style={{width: "70%"}} value={qualName}
+                                               style={{width: "70%"}} value={qualName}
                                                onChange={(e) => {
                                                    this.setState({
                                                        qualName: e.target.value
@@ -93,15 +92,14 @@ class info extends React.Component {
                                          xxl={{span: 3, offset: 6}} style={{padding: "1%"}}>
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
-                                                    if(qualName===undefined||qualName===""){
+                                                    if (qualName === undefined || qualName === "") {
                                                         message.error("信息输入不完整");
-                                                    }else{
+                                                    } else {
                                                         onAdd({
+                                                            manId:info.manId,
                                                             qualName: qualName
                                                         });
-                                                        this.props.history.push("/commodity/quality/");
                                                     }
-                                                    console.log(this.state);
 
                                                 }}
                                         >确认添加</Button>

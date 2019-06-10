@@ -16,6 +16,8 @@ export const UpdatePriceSuccess = 'pay/UpdatePriceSuccess';
 
 export const DeletePays = 'pay/DeletePay';
 export const DeletePaysSuccess = 'pay/DeletePaySuccess';
+export const FetchOrderInfo = 'pay/FetchOrderInfo';
+export const FetchOrderInfoSuccess = 'pay/FetchOrderInfoSuccess';
 
 export const EditPay = 'pay/EditPay';
 

@@ -22,16 +22,49 @@ export function* watchDelAuth() {
     yield takeEvery(ActionTypes.DelAuth, delAuth);
 }
 
+function* fetchAuth(action) {
+    try {
+        const result = yield call(Api.fetchAuthList,{
+            jwt:action.jwt
+        });
+        yield put(Actions.Success(result.data));
+    } catch (e) {
+        console.log(e);
+        yield put(Actions.Failure("获取权限列表时发生错误："+e.toString()));
+    }
+}
+
+export function* watchFetchAuth() {
+    yield takeEvery(ActionTypes.Fetching, fetchAuth);
+}
+
+function* fetchAuthInfo(action) {
+    try {
+        const result = yield call(Api.fetchAuthInfo,{
+            jwt:action.jwt,
+            authId:action.authId
+        });
+        yield put(Actions.FetchAuthInfoSuccess(result.data));
+    } catch (e) {
+        console.log(e);
+        yield put(Actions.Failure("获取权限信息时发生错误："+e.toString()));
+    }
+}
+
+export function* watchFetchAuthInfo() {
+    yield takeEvery(ActionTypes.FetchAuthInfo, fetchAuthInfo);
+}
+
 // 更新权限信息
 function* updateAuth(action) {
     try {
-        // const result = yield call(Api.updateManager,{
-        //     man_id:action.man_id,
-        //     auths:JSON.stringify(action.auths),
-        //     nickname:action.nickname,
-        //     jwt:action.jwt
-        // });
-        yield put(Actions.UpdateAuthSuccess(action.authId,action.authName,action.describe));
+        const result = yield call(Api.updateAuth,{
+            authId:action.authInfo.authId,
+            authName:action.authInfo.authName,
+            describe:action.authInfo.describe,
+            jwt:action.jwt
+        });
+        yield put(Actions.UpdateAuthSuccess(result.data));
     } catch (e) {
         console.log(e);
         yield put(Actions.Failure("更新权限信息时发生错误："+e.toString()));

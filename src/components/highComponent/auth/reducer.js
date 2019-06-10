@@ -3,7 +3,9 @@ import {message} from 'antd';
 
 const initState = {
     isLoading: false,   // 是否加载中
-    authId: undefined // auth
+    auth: undefined, // auth
+    authId:undefined,
+    auths:[]
 };
 
 //初始化status为载入状态
@@ -14,7 +16,22 @@ export default (state = initState, action) => {
             return {...state, isLoading: true}
         }
         case ActionTypes.Success: {
-            return {...state, isLoading: false}
+            const data = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state, isLoading: false}
+            }else{
+                return {...state, auths:data.auths,isLoading: false}
+            }
+        }
+        case ActionTypes.FetchAuthInfoSuccess: {
+            const data = action.result.data;
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+                return {...state, isLoading: false}
+            }else{
+                return {...state, auth:data.authInfo,isLoading: false}
+            }
         }
         case ActionTypes.EditAuth: {
             return {...state, authId:action.authId, isLoading: false}
@@ -24,8 +41,12 @@ export default (state = initState, action) => {
             return {...state, isLoading: false}
         }
         case ActionTypes.UpdateAuthSuccess: {
-            message.success("修改成功");
-            return {...state,isLoading: false}
+            if(action.result.status!=="200"){
+                message.error(action.result.msg);
+            }else{
+                message.success("修改成功");
+            }
+            return {...state, isLoading: false}
         }
         case ActionTypes.DelAuthSuccess: {
             message.success("删除成功");

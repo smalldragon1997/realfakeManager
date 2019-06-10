@@ -4,9 +4,9 @@ export const Start = () => ({
     type : ActionType.Start
 });
 
-export const Success = (auths) => ({
+export const Success = (result) => ({
     type : ActionType.Success,
-    auths
+    result
 });
 
 export const Failure = (error) => ({
@@ -14,21 +14,28 @@ export const Failure = (error) => ({
     error
 });
 
-export const Fetching = (jwt) => ({
+export const Fetching = () => ({
     type : ActionType.Fetching,
+
+});
+export const FetchQualityInfo = (qualityId) => ({
+    type : ActionType.FetchQualityInfo,qualityId
+
+});
+export const FetchQualityInfoSuccess = (result) => ({
+    type : ActionType.FetchQualityInfoSuccess,result
+
+});
+
+
+export const Delete = (qualityId,jwt) => ({
+    type : ActionType.Delete,qualityId,
     jwt
 });
 
 
-export const Delete = (qualityIdList,jwt) => ({
-    type : ActionType.Delete,qualityIdList,
-    jwt
-});
-
-
-export const DeleteSuccess = (qualityIdList) => ({
-    type : ActionType.DeleteSuccess,
-    qualityIdList
+export const DeleteSuccess = (result) => ({
+    type : ActionType.DeleteSuccess,result
 });
 
 export const Update = (jwt,qualityInfo) => ({
@@ -37,8 +44,8 @@ export const Update = (jwt,qualityInfo) => ({
 });
 
 
-export const UpdateSuccess = (qualityInfo) => ({
-    type : ActionType.UpdateSuccess,qualityInfo
+export const UpdateSuccess = (result) => ({
+    type : ActionType.UpdateSuccess,result
 });
 
 export const Add = (jwt,qualityInfo) => ({
@@ -47,8 +54,8 @@ export const Add = (jwt,qualityInfo) => ({
 });
 
 
-export const AddSuccess = (qualityInfo) => ({
-    type : ActionType.AddSuccess,qualityInfo
+export const AddSuccess = (result) => ({
+    type : ActionType.AddSuccess,result
 });
 
 

@@ -20,6 +20,16 @@ export const Fetching = (jwt) => ({
 });
 
 
+export const FetchManagerInfo = (manId,jwt) => ({
+    type : ActionType.FetchManagerInfo,manId,
+    jwt
+});
+
+
+export const FetchManagerInfoSuccess = (result) => ({
+    type : ActionType.FetchManagerInfoSuccess,result
+});
+
 export const DelManager = (manIdList,jwt) => ({
     type : ActionType.DelManager,manIdList,
     jwt
@@ -37,9 +47,9 @@ export const ForbidManager = (manIdList,jwt) => ({
 });
 
 
-export const ForbidManagerSuccess = (manIdList) => ({
+export const ForbidManagerSuccess = (result) => ({
     type : ActionType.ForbidManagerSuccess,
-    manIdList
+    result
 });
 
 export const CanCelForbidManager = (manIdList,jwt) => ({
@@ -48,9 +58,9 @@ export const CanCelForbidManager = (manIdList,jwt) => ({
 });
 
 
-export const CanCelForbidManagerSuccess = (manIdList) => ({
+export const CanCelForbidManagerSuccess = (result) => ({
     type : ActionType.CanCelForbidManagerSuccess,
-    manIdList
+    result
 });
 
 export const Filter = (filter,key,isForbidden) => ({
@@ -70,23 +80,23 @@ export const FetchAuthList = (jwt) => ({
     type : ActionType.FetchAuthList,jwt
 });
 
-export const FetchAuthListSuccess = (auths) => ({
-    type : ActionType.FetchAuthListSuccess,auths
+export const FetchAuthListSuccess = (result) => ({
+    type : ActionType.FetchAuthListSuccess,result
 });
 
 
-export const UpdateManager = (jwt,manId,auths,nickname) => ({
-    type : ActionType.UpdateManager,jwt,auths,nickname,manId
+export const UpdateManager = (managerInfo,jwt) => ({
+    type : ActionType.UpdateManager,jwt,managerInfo
 });
 
-export const UpdateManagerSuccess = (manId,auths,nickname) => ({
-    type : ActionType.UpdateManagerSuccess,auths,nickname,manId
+export const UpdateManagerSuccess = (result) => ({
+    type : ActionType.UpdateManagerSuccess,result
 });
 
-export const AddManager = (jwt,auths,nickname,username,password,icon,isForbidden) => ({
-    type : ActionType.AddManager,jwt,auths,nickname,username,password,icon,isForbidden
+export const AddManager = (managerInfo,jwt) => ({
+    type : ActionType.AddManager,jwt,managerInfo
 });
 
-export const AddManagerSuccess = () => ({
-    type : ActionType.AddManagerSuccess
+export const AddManagerSuccess = (result) => ({
+    type : ActionType.AddManagerSuccess,result
 });

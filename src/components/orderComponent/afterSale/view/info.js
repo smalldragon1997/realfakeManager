@@ -36,6 +36,7 @@ class info extends React.Component {
             aftId: undefined,
             visibleDisAgreeSingle: false,
             visibleClose: false,
+            visibleLeaveMsg:false,
             message: undefined,
             fileList: [],
         });
@@ -56,13 +57,15 @@ class info extends React.Component {
             onDisAgreeAfterSales,
             onCloseAfterSales,
             onEditUser,
-            onEditComm
+            onEditComm,
+            onLeaveMsgAfterSales
         } = this.props;
 
         const {
             visibleClose,
             visibleAgreeSingle,
             visibleDisAgreeSingle,
+            visibleLeaveMsg,
             message,
             fileList,
             aftId
@@ -70,23 +73,23 @@ class info extends React.Component {
 
         const columns = [
             {
-                title: '商品编号',
-                dataIndex: 'commId',
-                key: 'commId',
-                render: (text) => (<span>{text}</span>),
-            }, {
                 title: '商品图片',
                 dataIndex: 'icon',
                 key: 'icon',
                 render: (icon) => (<ShowImage image={icon} size={70}/>)
             }, {
+                title: '商品编号',
+                dataIndex: 'commId',
+                key: 'commId',
+                render: (text) => (<span>{text}</span>),
+            }, {
                 title: '商品名称',
                 dataIndex: 'title',
                 key: 'title',
-                render: (commodity) => (<a onClick={()=>{
-                    onEditComm(commodity.commId);
+                render: (afterSaleInfo) => (<a onClick={()=>{
+                    onEditComm(afterSaleInfo.commodity.commId);
                     this.props.history.push("/commodity/all/info");
-                }}>{commodity.title}</a>)
+                }}>{afterSaleInfo.title}</a>)
                 ,
             }, {
                 title: '品质',
@@ -112,11 +115,11 @@ class info extends React.Component {
             options.push({
                 key: commodity.commId,
                 commId: commodity.commId,
-                icon: commodity.icon,
-                title: commodity,
-                qualName: commodity.qualName,
-                size: commodity.size,
-                price: "￥" + commodity.price,
+                icon: afterSaleInfo.cover,
+                title: afterSaleInfo,
+                qualName: afterSaleInfo.qualName,
+                size: afterSaleInfo.size,
+                price: "￥" + afterSaleInfo.price,
             });
         }
         return (
@@ -139,9 +142,7 @@ class info extends React.Component {
                                     if (this.state.message === undefined) {
                                         message.error("请输入完整")
                                     } else {
-                                        let aftIdList = [];
-                                        aftIdList.push(aftId + "");
-                                        AgreeAfterSales(localStorage.getItem("RealFakeManagerJwt"), aftIdList, message);
+                                        AgreeAfterSales(localStorage.getItem("RealFakeManagerJwt"), afterSaleInfo.aftId, message,afterSaleInfo.orderId);
                                         this.setState({
                                             visibleAgreeSingle: false,
                                             message: undefined,
@@ -294,6 +295,42 @@ class info extends React.Component {
                                     </Col>
                                 </Row>
                             </Modal>
+                            <Modal
+                                title="请输入留言"
+                                visible={visibleLeaveMsg}
+                                onOk={() => {
+                                    if (this.state.message === undefined) {
+                                        message.error("请输入留言内容")
+                                    } else {
+                                        let afterSaleIdList = [];
+                                        afterSaleIdList.push(aftId + "");
+                                        onLeaveMsgAfterSales(localStorage.getItem("RealFakeManagerJwt"), afterSaleIdList, message);
+                                        this.setState({
+                                            visibleLeaveMsg: false,
+                                            message: undefined,
+                                            aftId: undefined,
+                                        });
+                                        this.props.history.push("/order/afterSale");
+                                    }
+                                }}
+                                onCancel={() => {
+                                    this.setState({
+                                        visibleLeaveMsg: false,
+                                        message: undefined, aftId: undefined,
+                                    })
+                                }}
+                            >
+                                <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
+                                    <Col span={5}>
+                                        留言内容：
+                                    </Col>
+                                    <Col span={19}>
+                                        <Input placeholder={"请输入留言内容"} value={message} onChange={(e) => {
+                                            this.setState({message: e.target.value})
+                                        }}/>
+                                    </Col>
+                                </Row>
+                            </Modal>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingBottom: 0}}>
                                     <Divider>订单基本信息</Divider>
@@ -305,35 +342,42 @@ class info extends React.Component {
                                     <Col span={6} style={{textAlign: "left", fontSize: 20, fontWeight: "bold"}}>
                                         <Icon type="schedule" theme="outlined"/> 订单号：{afterSaleInfo.orderId}
                                     </Col>
-                                    <Col span={6} style={{textAlign: "right"}}>
+                                    <Col span={10} style={{textAlign: "right"}}>
                                         <Popconfirm placement="top" title={
                                             afterSaleInfo.state > 0 ? ("确定删除此售后记录吗？") : (
                                                 "确定删除此售后申请吗？"
                                             )
                                         } onConfirm={() => {
-                                            let aftIdList = [];
-                                            aftIdList.push(afterSaleInfo.aftId + "");
-                                            onDeleteAfterSales(localStorage.getItem("RealFakeManagerJwt"), aftIdList);
+                                            onDeleteAfterSales(localStorage.getItem("RealFakeManagerJwt"),afterSaleInfo.aftId);
                                             this.props.history.goBack();
                                         }} okText="确认" cancelText="点错了">
                                             <Button type={"danger"}>删除</Button>
                                         </Popconfirm>
+                                        {/*{*/}
+                                            {/*afterSaleInfo.state < 2 ? (*/}
+                                                {/*<Popconfirm placement="top" title={*/}
+                                                    {/*"确定拒绝售后申请?"*/}
+                                                {/*} onConfirm={() => {*/}
+                                                    {/*this.setState({*/}
+                                                        {/*aftId: afterSaleInfo.aftId,*/}
+                                                        {/*visibleDisAgreeSingle: true*/}
+                                                    {/*})*/}
+                                                {/*}} okText="确认" cancelText="点错了">*/}
+                                                    {/*<Button type={"dashed"}>拒绝售后</Button>*/}
+                                                {/*</Popconfirm>*/}
+                                            {/*) : null*/}
+                                        {/*}*/}
+                                        {/*{*/}
+                                            {/*afterSaleInfo.state < 2 ? (*/}
+                                                {/*<Button type={"primary"} onClick={() => {*/}
+                                                    {/*this.setState({*/}
+                                                        {/*aftId: afterSaleInfo.aftId,*/}
+                                                        {/*visibleLeaveMsg: true*/}
+                                                    {/*})}}>留言</Button>*/}
+                                            {/*) : null*/}
+                                        {/*}*/}
                                         {
-                                            afterSaleInfo.state < 2 ? (
-                                                <Popconfirm placement="top" title={
-                                                    "确定拒绝售后申请?"
-                                                } onConfirm={() => {
-                                                    this.setState({
-                                                        aftId: afterSaleInfo.aftId,
-                                                        visibleDisAgreeSingle: true
-                                                    })
-                                                }} okText="确认" cancelText="点错了">
-                                                    <Button type={"dashed"}>拒绝售后</Button>
-                                                </Popconfirm>
-                                            ) : null
-                                        }
-                                        {
-                                            afterSaleInfo.state === 0 ? (
+                                            afterSaleInfo.state === 1 ? (
                                                 <Popconfirm placement="top" title={
                                                     "确定同意售后申请?"
                                                 } onConfirm={() => {
@@ -346,25 +390,25 @@ class info extends React.Component {
                                                 </Popconfirm>
                                             ) : null
                                         }
-                                        {
-                                            afterSaleInfo.state === 1 ? (
-                                                <Popconfirm placement="top" title={
-                                                    "确定关闭此售后?"
-                                                } onConfirm={() => {
-                                                    this.setState({
-                                                        aftId: afterSaleInfo.aftId,
-                                                        visibleClose: true
-                                                    })
-                                                }} okText="确认" cancelText="点错了">
-                                                    <Button type={"primary"}>关闭售后</Button>
-                                                </Popconfirm>
-                                            ) : null
-                                        }
+                                        {/*{*/}
+                                            {/*afterSaleInfo.state === 1 ? (*/}
+                                                {/*<Popconfirm placement="top" title={*/}
+                                                    {/*"确定关闭此售后?"*/}
+                                                {/*} onConfirm={() => {*/}
+                                                    {/*this.setState({*/}
+                                                        {/*aftId: afterSaleInfo.aftId,*/}
+                                                        {/*visibleClose: true*/}
+                                                    {/*})*/}
+                                                {/*}} okText="确认" cancelText="点错了">*/}
+                                                    {/*<Button type={"primary"}>关闭售后</Button>*/}
+                                                {/*</Popconfirm>*/}
+                                            {/*) : null*/}
+                                        {/*}*/}
                                     </Col>
                                 </Row>
                                 <Row type={"flex"} justify={"space-around"}
                                      style={{padding: "3%", paddingTop: 0, paddingBottom: 0}}>
-                                    <Col span={8}>
+                                    <Col span={10}>
                                         <Row style={{
                                             padding: "2%",
                                             paddingLeft: "8%"
@@ -378,17 +422,17 @@ class info extends React.Component {
                                         }}>用户编号:{afterSaleInfo.userInfo.userId}</Row>
                                         <Row style={{padding: "2%", paddingLeft: "8%"}}>售后编号:{afterSaleInfo.aftId}</Row>
                                     </Col>
-                                    <Col span={8}>
+                                    <Col span={7}>
                                         <Row
                                             style={{padding: "2%"}}>申请时间:{new Date(afterSaleInfo.applyDate).Format("yyyy-MM-dd hh:mm:ss")}</Row>
                                         {
-                                            afterSaleInfo.state > 1 ? (
+                                            afterSaleInfo.state >2  ? (
                                                 <Row
                                                     style={{padding: "2%"}}>完成时间:{new Date(afterSaleInfo.doneDate).Format("yyyy-MM-dd hh:mm:ss")}</Row>
                                             ) : null
                                         }
                                     </Col>
-                                    <Col span={8}>
+                                    <Col span={7}>
                                         <Row>
                                             <Col span={12}>
                                                 <Row style={{color: "#bfbfbf"}}>售后状态</Row>
@@ -411,50 +455,50 @@ class info extends React.Component {
                                             </Col>
                                             <Col span={12}>
                                                 <Row style={{color: "#bfbfbf"}}>退款金额</Row>
-                                                <Row style={{fontSize: 20}}>￥{afterSaleInfo.commodity.price}</Row>
+                                                <Row style={{fontSize: 20}}>￥{afterSaleInfo.price}</Row>
                                             </Col>
                                         </Row>
                                     </Col>
                                 </Row>
-                                <Row type={"flex"} align={"middle"}
-                                     style={{padding: "3%", paddingTop: 0, paddingBottom: 0}}>
-                                    <Divider>售后进度</Divider>
-                                </Row>
-                                <Row type={"flex"} justify={"space-around"} style={{padding: "3%", paddingTop: 0}}>
-                                    <Col span={8}>
-                                        <Timeline style={{padding: "2%"}}>
-                                            {
-                                                afterSaleInfo.message !== undefined ? (
-                                                    afterSaleInfo.message.split("#").map((item, index) => (
-                                                        <Timeline.Item key={index}>
-                                                            {item}
-                                                        </Timeline.Item>
+                                {/*<Row type={"flex"} align={"middle"}*/}
+                                     {/*style={{padding: "3%", paddingTop: 0, paddingBottom: 0}}>*/}
+                                    {/*<Divider>售后进度</Divider>*/}
+                                {/*</Row>*/}
+                                {/*<Row type={"flex"} justify={"space-around"} style={{padding: "3%", paddingTop: 0}}>*/}
+                                    {/*<Col span={8}>*/}
+                                        {/*<Timeline style={{padding: "2%"}}>*/}
+                                            {/*{*/}
+                                                {/*afterSaleInfo.message !== null ? (*/}
+                                                    {/*afterSaleInfo.message.split("#").map((item, index) => (*/}
+                                                        {/*<Timeline.Item key={index}>*/}
+                                                            {/*{item}*/}
+                                                        {/*</Timeline.Item>*/}
 
-                                                    ))
-                                                ) : (
-                                                    <Row type={"flex"} justify={"space-around"}>
-                                                        等待客服同意
-                                                    </Row>)
-                                            }
-                                        </Timeline>
-                                        {
-                                            afterSaleInfo.resultPic !== undefined && afterSaleInfo.resultPic.length > 0 ? (
-                                                <Row style={{paddingLeft: "8%"}}>
-                                                    <ShowImages images={afterSaleInfo.resultPic} size={70}/>
-                                                </Row>
-                                            ) : null
-                                        }
-                                    </Col>
-                                    {
-                                        afterSaleInfo.state > 0 ? (
-                                            <Col span={8}>
-                                                <Row
-                                                    style={{padding: "2%"}}>处理管理员:{afterSaleInfo.manager.nickname}</Row>
-                                                <Row style={{padding: "2%"}}>管理员编号:{afterSaleInfo.manager.manId}</Row>
-                                            </Col>
-                                        ) : null
-                                    }
-                                </Row>
+                                                    {/*))*/}
+                                                {/*) : (*/}
+                                                    {/*<Row type={"flex"} justify={"space-around"}>*/}
+                                                        {/*等待客服同意*/}
+                                                    {/*</Row>)*/}
+                                            {/*}*/}
+                                        {/*</Timeline>*/}
+                                        {/*{*/}
+                                            {/*afterSaleInfo.resultPic !== undefined && afterSaleInfo.resultPic.length > 0 ? (*/}
+                                                {/*<Row style={{paddingLeft: "8%"}}>*/}
+                                                    {/*<ShowImages images={afterSaleInfo.resultPic} size={70}/>*/}
+                                                {/*</Row>*/}
+                                            {/*) : null*/}
+                                        {/*}*/}
+                                    {/*</Col>*/}
+                                    {/*{*/}
+                                        {/*afterSaleInfo.state > 1 ? (*/}
+                                            {/*<Col span={8}>*/}
+                                                {/*<Row*/}
+                                                    {/*style={{padding: "2%"}}>处理管理员:{afterSaleInfo.managerInfo.nickname}</Row>*/}
+                                                {/*<Row style={{padding: "2%"}}>管理员编号:{afterSaleInfo.managerInfo.manId}</Row>*/}
+                                            {/*</Col>*/}
+                                        {/*) : null*/}
+                                    {/*}*/}
+                                {/*</Row>*/}
 
                                 {/*商品信息*/}
                                 <Row type={"flex"} align={"middle"}
@@ -476,23 +520,23 @@ class info extends React.Component {
                                 </Row>
                                 <Row type={"flex"} align={"middle"}
                                      style={{padding: "13%", paddingTop: 0, paddingBottom: 0}}>
-                                    {afterSaleInfo.reason}
+                                    原因：{afterSaleInfo.reason}
                                 </Row>
                                 <Row type={"flex"} align={"middle"}
                                      style={{padding: "3%", paddingBottom: 0, paddingTop: 0}}>
                                     <Divider>售后申请拍照</Divider>
                                 </Row>
                                 {
-                                    afterSaleInfo.pictures !== undefined && afterSaleInfo.pictures.length > 0 ? (
+                                    afterSaleInfo.afterPicList !== undefined && afterSaleInfo.afterPicList.length > 0 ? (
                                         <Row type={"flex"} align={"middle"}
                                              style={{padding: "13%", paddingTop: 0, paddingBottom: "3%"}}>
-                                            <ShowImages images={afterSaleInfo.pictures} size={70}/>
+                                            <ShowImages images={afterSaleInfo.afterPicList.reduce((pics,next)=>pics.concat(next.url),[])} size={70}/>
                                         </Row>
                                     ) : null
                                 }
                                 {/*物流信息*/}
                                 {
-                                    afterSaleInfo.express !== undefined && afterSaleInfo.state > 0 ? (
+                                    afterSaleInfo.express !== null && afterSaleInfo.state > 1 ? (
                                         <div>
                                             <Row type={"flex"} align={"middle"}
                                                  style={{padding: "3%", paddingTop: 0, paddingBottom: 0}}>
@@ -504,7 +548,7 @@ class info extends React.Component {
                                                     <Row style={{
                                                         padding: "2%",
                                                         paddingLeft: "8%"
-                                                    }}>物流公司:{afterSaleInfo.express.name}</Row>
+                                                    }}>物流公司:{afterSaleInfo.express.expName}</Row>
                                                     <Row style={{
                                                         padding: "2%",
                                                         paddingLeft: "8%"
@@ -566,6 +610,10 @@ const mapDispatchToProps = (dispatch) => {
         onCloseAfterSales: (jwt, aftIdList, message, imageList) => {
             dispatch(Actions.Start());
             dispatch(Actions.CloseAfterSales(jwt, aftIdList, message, imageList));
+        },
+        onLeaveMsgAfterSales: (jwt, aftIdList,message) => {
+            dispatch(Actions.Start());
+            dispatch(Actions.LeaveMsgAfterSales(jwt, aftIdList,message));
         },
     }
 };

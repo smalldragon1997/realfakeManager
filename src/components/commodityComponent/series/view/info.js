@@ -1,6 +1,7 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import * as Actions from '../actions';
+import * as BrandActions from '../../brand/actions';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
 import lrz from 'lrz';
@@ -24,45 +25,37 @@ import {
 } from 'antd';
 
 const Option = Select.Option;
-import ShowImage from '../../../commom/showImage'
 import ShowImages from '../../../commom/showImages'
 
 const CheckboxGroup = Checkbox.Group;
 const {TextArea} = Input;
 
 const Panel = Collapse.Panel;
-// 搜索引擎客户端创建连接
-const elasticsearch = require('elasticsearch');
-let client = new elasticsearch.Client({
-    host: 'localhost:9200',
-});
 
 class info extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = ({
-            seriesId: undefined,
+            brandId: undefined,
             // 需要提交的数据
             seriesName: undefined,
             describe: undefined,
             cover: undefined,
-            manId: undefined,
             pictures: [],
             types: [],
             ids: [],
 
-
-            oldPictures: [],
             fileList: [],
             imageUrl: undefined,
         });
     }
 
     componentDidMount() {
-
-        //获取系列信息
-        this.searchSeries(this.props.seriesId);
+        if(this.props.seriesId!==undefined){
+            this.props.onFetchSeriesInfo(this.props.seriesId);
+            this.props.onFetchBrandList();
+        }
     }
 
     _cropCover() {
@@ -72,46 +65,25 @@ class info extends React.Component {
         });
     }
 
-
-    // 搜索系列
-    searchSeries(seriesId) {
-        if (seriesId !== undefined) {
-            client.get({
-                index: 'series',
-                type: 'series',
-                id: seriesId
-            }).then(
-                function (body) {
-                    this.setState({
-                        ...body._source,
-                        oldPictures: body._source.pictures
-                    });
-                }.bind(this),
-                function (error) {
-                    console.trace(error.message);
-                }
-            );
-        }
-
-    }
-
     render() {
         const {
             seriesId,
             isLoading, // 是否加载中
             onDelete,
             onUpdate,
+            seriesInfo,
+            info,
+            brandList,
         } = this.props;
 
         const {
             seriesName,
             describe,
             cover,
-            manId,
+            brandId,
             pictures,
             types,
             ids,
-            oldPictures,
             fileList,
             imageUrl,
         } = this.state;
@@ -119,7 +91,7 @@ class info extends React.Component {
         return (
             <Spin spinning={isLoading}>
                 {
-                    seriesId === undefined ? (
+                    seriesInfo === undefined ? (
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
@@ -131,7 +103,7 @@ class info extends React.Component {
                         <Row>
                             <Col>
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%"}}>
-                                    <Divider>系列信息(发布管理员:{manId})</Divider>
+                                    <Divider>系列信息(发布管理员:{seriesInfo.managerInfo.nickname})</Divider>
                                 </Row>
                                 {/*系列名*/}
                                 <Row type={"flex"} align={"middle"} style={{padding: "3%", paddingTop: 0}}>
@@ -139,7 +111,7 @@ class info extends React.Component {
                                         系列名：
                                     </Col>
                                     <Col span={18}>
-                                        <Input style={{width: "70%"}} value={seriesName}
+                                        <Input style={{width: "70%"}} value={seriesName} placeholder={seriesInfo.seriesName}
                                                onChange={(e) => {
                                                    this.setState({
                                                        seriesName: e.target.value
@@ -155,12 +127,40 @@ class info extends React.Component {
                                     <Col span={18}>
                                         <TextArea
                                             rows={5}
-                                            style={{width: "70%"}} value={describe}
+                                            style={{width: "70%"}} value={describe} placeholder={seriesInfo.describe}
                                             onChange={(e) => {
                                                 this.setState({
                                                     describe: e.target.value
                                                 })
                                             }}/>
+                                    </Col>
+                                </Row>
+                                {/*所属品牌*/}
+                                <Row style={{padding: "3%", paddingTop: 0}}>
+                                    <Col span={6} style={{textAlign: "right"}}>
+                                        所属品牌：
+                                    </Col>
+                                    <Col span={3}>
+                                        <Select notFoundContent={"没有匹配内容"} allowClear
+                                                defaultValue={seriesInfo.brand.brandId}
+                                                dropdownMatchSelectWidth={false}
+                                                disabled={isLoading}
+                                                showSearch
+                                                style={{width: "100%", paddingRight: 5}}
+                                                placeholder="尺码信息"
+                                                optionFilterProp="children"
+                                                onChange={(e) => {
+                                                    this.setState({brandId: e});
+                                                }}
+                                                filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                                        >
+                                            {
+                                                brandList.map((item,index)=>(
+                                                    <Option value={item.brandId} key={item.brandId}>{item.brandName}</Option>
+                                                ))
+                                            }
+                                        </Select>
+                                        {seriesInfo.brand.brandName}(当前)
                                     </Col>
                                 </Row>
                                 {/*系列图片*/}
@@ -172,16 +172,17 @@ class info extends React.Component {
 
                                         <Collapse bordered={false} defaultActiveKey={['1']}>
                                             <Panel header="选择系列图片" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
-                                                <ShowImages images={oldPictures} size={70}/><br/>
+                                                <ShowImages images={seriesInfo.seriesPicList.reduce((list,next)=>(list.concat(next.url)),[])} size={70}/><br/>
                                                 (此操作将删除历史图片)<br/>
                                                 <Upload
+                                                    headers={{Authorization: "bearer " + localStorage.getItem("RealFakeManagerJwt")}}
                                                     accept={"image/*"}
                                                     multiple
-                                                    action="/mock/upload"
+                                                    action="/api/v1/data/file"
                                                     listType="picture-card"
                                                     fileList={fileList}
                                                     onChange={({fileList}) => this.setState({
-                                                        types: fileList.reduce((list, next) => (list.concat("commodity")), []),
+                                                        types: fileList.reduce((list, next) => (list.concat("commodities")), []),
                                                         ids: fileList.reduce((list, next) => (list.concat("")), []),
                                                         pictures: fileList.reduce((list, next) => (list.concat(next.name)), []),
                                                         fileList
@@ -207,12 +208,13 @@ class info extends React.Component {
                                             <Panel header="设置图片跳转" key="1" style={{background: '#f7f7f7',border: 0,overflow: 'hidden'}}>
                                                 (按图片顺序)
                                                 {
+                                                    pictures.length===0?"请上传图片后设置图片跳转":
                                                     pictures.map((item, index) => {
                                                         return (
                                                             <Row style={{padding: 5}}>
                                                                 <Col span={8}>
                                                                     <Select
-                                                                        value={types[index] === "" ? ("commodity") : (types[index])}
+                                                                        value={types[index] === "" ? ("commodities") : (types[index])}
                                                                         notFoundContent={"没有匹配内容"} allowClear
                                                                         dropdownMatchSelectWidth={false}
                                                                         disabled={isLoading}
@@ -227,11 +229,11 @@ class info extends React.Component {
                                                                         }}
                                                                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                                                                     >
-                                                                        <Option value={"commodity"}
+                                                                        <Option value={"commodities"}
                                                                                 key={"commodity"}>跳转商品</Option>
-                                                                        <Option value={"brand"} key={"brand"}>跳转品牌</Option>
+                                                                        <Option value={"brands"} key={"brand"}>跳转品牌</Option>
                                                                         <Option value={"series"} key={"series"}>跳转系列</Option>
-                                                                        <Option value={"unite"} key={"unite"}>跳转联名</Option>
+                                                                        <Option value={"unites"} key={"unite"}>跳转联名</Option>
                                                                     </Select>
                                                                 </Col>
                                                                 <Col span={8}>
@@ -255,6 +257,11 @@ class info extends React.Component {
                                                 }
                                             </Panel>
                                         </Collapse>
+                                        当前图片跳转(按顺序)<br/>{
+                                        seriesInfo.seriesPicList.map((item,index)=>(
+                                            <Row>{"跳转："+item.type+" 编号："+item.id}</Row>
+                                        ))
+                                    }
                                     </Col>
                                 </Row>
                                 {/*系列封面*/}
@@ -269,7 +276,11 @@ class info extends React.Component {
 
                                                 <Row>
                                                     {
-                                                        cover === undefined ? null : (
+                                                        cover === undefined ? (
+                                                            <Col span={10}>
+                                                                <Avatar src={seriesInfo.cover} size={160} shape={"square"}/>
+                                                            </Col>
+                                                        ) : (
                                                             <Col span={10}>
                                                                 <Avatar src={cover} size={160} shape={"square"}/>
                                                             </Col>
@@ -333,38 +344,23 @@ class info extends React.Component {
                                          xxl={{span: 3, offset: 6}} style={{padding: "1%"}}>
                                         <Button type={"primary"} style={{width: "100%"}}
                                                 onClick={() => {
-                                                    let idsFlag = false;
-                                                    for (let i=0;i<pictures.length;i++){
-                                                        if(ids[i]===""){
-                                                            idsFlag=true;
-                                                            break;
-                                                        }
-                                                    }
-                                                    if(seriesName===undefined||seriesName===""||
-                                                        describe===undefined||describe===""||
-                                                        cover===undefined||cover===""||
-                                                        pictures.length===0||
-                                                        types.length===0||
-                                                        ids.length===0||idsFlag){
-                                                        message.error("信息输入不完整");
-                                                    }else{
-                                                        onUpdate({
-                                                            seriesName: seriesName,
-                                                            describe: describe,
-                                                            cover: cover,
-                                                            pictures: pictures,
-                                                            types: types,
-                                                            ids: ids,
-                                                        });
-                                                        this.props.history.push("/commodity/series/");
-                                                    }
-                                                    console.log(this.state);
+                                                    onUpdate({
+                                                        manId:info.manId,
+                                                        seriesId:seriesInfo.seriesId,
+                                                        brandId: brandId===undefined||brandId===""?seriesInfo.brand.brandId:brandId,
+                                                        seriesName: seriesName===undefined||seriesName===""?seriesInfo.seriesName:seriesName,
+                                                        describe: describe===undefined||describe===""?seriesInfo.describe:describe,
+                                                        cover: cover===undefined||cover===""?seriesInfo.cover:cover,
+                                                        pictures: pictures,
+                                                        types: types,
+                                                        ids: ids,
+                                                    });
                                                 }}
                                         >修改</Button>
                                     </Col>
                                     <Col xs={24} sm={24} md={24} lg={24} xl={3} xxl={3} style={{padding: "1%"}}>
 
-                                        <Popconfirm placement="top" title={"确定删除系列 " + seriesName + " 吗？"}
+                                        <Popconfirm placement="top" title={"确定删除系列 " + seriesInfo.seriesName + " 吗？"}
                                                     onConfirm={() => {
                                                         onDelete(seriesId);
                                                         this.props.history.push("/commodity/series/");
@@ -396,8 +392,13 @@ class info extends React.Component {
 // props绑定state
 const mapStateToProps = (state) => {
     const series = state.commodity.series;
+    const brand = state.commodity.brand;
+    const navLink = state.navLink;
     return {
+        info: navLink.info,
+        brandList:brand.brandList,
         seriesId: series.seriesId,
+        seriesInfo: series.seriesInfo,
         isLoading: series.isLoading
     }
 };
@@ -406,13 +407,20 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         onDelete: (seriesId) => {
-            let seriesIdList = [];
             dispatch(Actions.Start());
-            dispatch(Actions.Delete(seriesIdList.push(seriesId), localStorage.getItem("RealFakeManagerJwt")));
+            dispatch(Actions.Delete(seriesId, localStorage.getItem("RealFakeManagerJwt")));
         },
         onUpdate: (seriesInfo) => {
             dispatch(Actions.Start());
             dispatch(Actions.Update(localStorage.getItem("RealFakeManagerJwt"), seriesInfo));
+        },
+        onFetchSeriesInfo: (seriesId) => {
+            dispatch(Actions.Start());
+            dispatch(Actions.FetchSeriesInfo(seriesId));
+        },
+        onFetchBrandList: () => {
+            dispatch(Actions.Start());
+            dispatch(BrandActions.Fetching());
         },
     }
 };

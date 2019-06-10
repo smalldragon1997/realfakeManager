@@ -1,6 +1,10 @@
 // 用来判断action的类型
 export const Fetching = 'manager/fetching';
 
+export const FetchManagerInfo = 'manager/FetchManagerInfo';
+
+export const FetchManagerInfoSuccess = 'manager/FetchManagerInfoSuccess';
+
 // start
 export const Start = 'manager/start';
 

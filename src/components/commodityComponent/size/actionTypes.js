@@ -23,3 +23,6 @@ export const Add = 'size/Add';
 export const AddSuccess = 'size/AddSuccess';
 
 export const Edit = 'size/Edit';
+
+export const FetchSizeInfo = 'size/FetchSizeInfo';
+export const FetchSizeInfoSuccess = 'size/FetchSizeInfoSuccess';
